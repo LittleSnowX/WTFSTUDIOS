@@ -1,0 +1,3735 @@
+-- SERVICES & GLOBAL CACHE
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+while not Players.LocalPlayer do
+    task.wait(0.1)
+end
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui", 9e9)
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart", 9e9)
+local Humanoid = Character:WaitForChild("Humanoid", 9e9)
+local Remotes = ReplicatedStorage:WaitForChild("Remotes", 9e9)
+task.wait(2)
+
+local TweenService      = game:GetService("TweenService")
+local CoreGui           = game:GetService("CoreGui")
+local UIS               = game:GetService("UserInputService")
+local HttpService       = game:GetService("HttpService")
+local TeleportService   = game:GetService("TeleportService")
+local VirtualUser       = game:GetService("VirtualUser")
+local VIM               = game:GetService("VirtualInputManager")
+local GuiService        = game:GetService("GuiService")
+local TextService       = game:GetService("TextService")
+local Lighting          = game:GetService("Lighting")
+
+print("✅ All Game Systems Loaded Successfully!")
+
+-- CUSTOM NOTIFICATION SYSTEM
+local function CustomNotify(opts)
+    local title = opts.Title or "Notification"
+    local content = opts.Content or opts.Description or ""
+    local duration = opts.Duration or 3
+    local iconId = opts.Icon
+    
+    local logoId = "rbxassetid://86949082023913" 
+
+    local Plr = LocalPlayer
+    local playerGui = Plr:FindFirstChild("PlayerGui")
+    if not playerGui then return end
+    
+    local sg = playerGui:FindFirstChild("VOX_PremiumNotify")
+    if not sg then
+        sg = Instance.new("ScreenGui")
+        sg.Name = "VOX_PremiumNotify"
+        sg.ResetOnSpawn = false
+        sg.DisplayOrder = 99999
+        sg.Parent = playerGui
+    end
+
+    local container = sg:FindFirstChild("Container")
+    if not container then
+        container = Instance.new("Frame")
+        container.Name = "Container"
+        container.Size = UDim2.new(1, 0, 0, 500)
+        container.Position = UDim2.new(0, 0, 0, 25)
+        container.BackgroundTransparency = 1
+        container.Parent = sg
+        local layout = Instance.new("UIListLayout")
+        layout.Padding = UDim.new(0, 10)
+        layout.VerticalAlignment = Enum.VerticalAlignment.Top
+        layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.Parent = container
+    end
+
+    local pill = Instance.new("Frame")
+    pill.Name = "Pill"
+    pill.BackgroundColor3 = Color3.fromRGB(20, 20, 22)
+    pill.BackgroundTransparency = 0.1
+    pill.BorderSizePixel = 0
+    pill.Size = UDim2.new(0, 0, 0, 36)
+    pill.ClipsDescendants = true
+    pill.Parent = container
+
+    local corners = Instance.new("UICorner")
+    corners.CornerRadius = UDim.new(0, 10)
+    corners.Parent = pill
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(45, 45, 50)
+    stroke.Thickness = 1.5
+    stroke.Parent = pill
+
+    local brandLogo = Instance.new("ImageLabel")
+    brandLogo.Name = "BrandLogo"
+    brandLogo.Size = UDim2.new(0, 28, 0, 28)
+    brandLogo.Position = UDim2.new(0, 8, 0.5, -14)
+    brandLogo.BackgroundTransparency = 1
+    brandLogo.Image = logoId
+    brandLogo.ImageTransparency = 0.2
+    brandLogo.Parent = pill
+
+    local statusLabel = nil
+    if iconId then
+        statusLabel = Instance.new("TextLabel")
+        statusLabel.Name = "StatusEmoji"
+        statusLabel.Size = UDim2.new(0, 20, 0, 20)
+        statusLabel.Position = UDim2.new(1, -30, 0.5, 0)
+        statusLabel.AnchorPoint = Vector2.new(0, 0.5)
+        statusLabel.BackgroundTransparency = 1
+        statusLabel.Text = (tostring(iconId):find("131922379895080") and "❌") or "✅"
+        statusLabel.TextSize = 16
+        statusLabel.Parent = pill
+    end
+
+    local text = Instance.new("TextLabel")
+    text.Name = "Text"
+    text.Size = UDim2.new(1, (statusLabel and -81 or -51), 1, 0)
+    text.Position = UDim2.new(0, 44, 0.5, 0)
+    text.AnchorPoint = Vector2.new(0, 0.5)
+    text.BackgroundTransparency = 1
+    text.Font = Enum.Font.GothamMedium
+    text.Text = content ~= "" and content or title
+    text.TextColor3 = Color3.fromRGB(255, 255, 255)
+    text.TextSize = 14
+    text.TextXAlignment = Enum.TextXAlignment.Left
+    text.Parent = pill
+
+    local textSizeX = 200
+    pcall(function()
+        local result = TextService:GetTextSize(text.Text, text.TextSize, text.Font, Vector2.new(1000, 36))
+        if result then textSizeX = result.X end
+    end)
+    local targetWidth = textSizeX + (statusLabel and 81 or 51)
+
+    local ts = TweenService
+    ts:Create(pill, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, targetWidth, 0, 36)}):Play()
+    
+    task.spawn(function()
+        task.wait(duration)
+        local tOut = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+        ts:Create(pill, tOut, {Size = UDim2.new(0, 0, 0, 36), BackgroundTransparency = 1}):Play()
+        ts:Create(text, tOut, {TextTransparency = 1}):Play()
+        ts:Create(brandLogo, tOut, {ImageTransparency = 1}):Play()
+        if statusLabel then ts:Create(statusLabel, tOut, {TextTransparency = 1}):Play() end
+        task.wait(0.5)
+        pill:Destroy()
+    end)
+end
+
+getgenv().Notify = CustomNotify
+
+-- GUI PROTECTOR HELPER
+local function GetSafeGuiParent()
+    local success, result = pcall(gethui)
+    if success and result and result.Parent then return result end
+    success, result = pcall(function() return game:GetService("CoreGui") end)
+    if success and result then return result end
+    return PlayerGui
+end
+
+-- LOADING SCREEN
+local TargetGuiParent = GetSafeGuiParent()
+local function setProgress(pct, msg) end
+
+-- CASCADE IMPORT
+task.wait(0.5)
+setProgress(0.15, "Loading Cascade UI Library...")
+
+local cascade = nil
+local success, errorMsg = pcall(function()
+    local url = "https://github.com/biggaboy212/Cascade/releases/latest/download/dist.luau"
+    cascade = loadstring(game:HttpGet(url))()
+end)
+
+if not success or not cascade then
+    setProgress(1, "Error Loading UI!")
+    task.wait(2)
+    if loadingGui then loadingGui:Destroy() end
+    warn("Cascade UI Error: " .. tostring(errorMsg))
+    return 
+end
+
+setProgress(0.5, "Loading configuration...")
+
+-- CONFIG SYSTEM
+local CONFIG_FILE = "VOX_AnimeLeveling_Config.json"
+local Config = {}
+
+local function SaveConfig()
+    pcall(function()
+        writefile(CONFIG_FILE, HttpService:JSONEncode(Config))
+    end)
+end
+
+local function LoadConfig()
+    pcall(function()
+        if isfile and isfile(CONFIG_FILE) then
+            local ok, data = pcall(function()
+                return HttpService:JSONDecode(readfile(CONFIG_FILE))
+            end)
+            if ok and type(data) == "table" then
+                Config = data
+            end
+        end
+    end)
+end
+
+LoadConfig()
+
+-- GLOBAL FLAGS
+local function cfgBool(key) return Config[key] == true end
+
+getgenv().AutoRankUp             = cfgBool("AutoRankUp")
+getgenv().AutoTeleport           = cfgBool("AutoTeleport")
+getgenv().AutoWorldQuest         = cfgBool("AutoWorldQuest")
+getgenv().AutoClick              = cfgBool("AutoClick")
+getgenv().AutoRollSaiyan         = cfgBool("AutoRollSaiyan")
+getgenv().AutoRollDragonball     = cfgBool("AutoRollDragonball")
+getgenv().AutoRollFruits         = cfgBool("AutoRollFruits")
+getgenv().AutoRollBlessing       = cfgBool("AutoRollBlessing")
+getgenv().AutoRollEaster         = cfgBool("AutoRollEaster")
+getgenv().AutoRollProsperity     = cfgBool("AutoRollProsperity")
+getgenv().AutoRollGrimoires      = cfgBool("AutoRollGrimoires")
+getgenv().AutoRollDemon          = cfgBool("AutoRollDemon")
+getgenv().AutoRollBreathing      = cfgBool("AutoRollBreathing")
+getgenv().AutoBloodArt           = cfgBool("AutoBloodArt")
+getgenv().AutoWisteria           = cfgBool("AutoWisteria")
+getgenv().AutoEgg                = cfgBool("AutoEgg")
+getgenv().AutoEasterBasket       = cfgBool("AutoEasterBasket")
+getgenv().AutoWisteriaRaid       = cfgBool("AutoWisteriaRaid")
+getgenv().AutoUpgradeHaki        = cfgBool("AutoUpgradeHaki")
+getgenv().AutoUpgradeAttackRange = cfgBool("AutoUpgradeAttackRange")
+getgenv().AutoEasyTower          = cfgBool("AutoEasyTower")
+getgenv().AutoClaimStarQuest     = cfgBool("AutoClaimStarQuest")
+getgenv().AutoStats              = cfgBool("AutoStats")
+getgenv().AutoClaimPlaytime      = cfgBool("AutoClaimPlaytime")
+getgenv().AutoClaimDaily         = cfgBool("AutoClaimDaily")
+getgenv().AntiAFK                = Config.AntiAFK ~= false
+getgenv().AutoRejoinEnabled      = cfgBool("AutoRejoinEnabled")
+getgenv().AutoRollMask           = cfgBool("AutoRollMask")
+getgenv().AutoEquipBest          = cfgBool("AutoEquipBest")
+getgenv().AutoRollRace           = cfgBool("AutoRollRace")
+getgenv().TowerCenterTP          = cfgBool("TowerCenterTP")
+
+local MinimizeKey = Enum.KeyCode.Home
+pcall(function()
+    if Config.MinimizeKey and Config.MinimizeKey ~= "" then
+        MinimizeKey = Enum.KeyCode[Config.MinimizeKey]
+    end
+end)
+local ToggleRefs  = {}
+local LoopRunning = {}
+
+local function SaveToggle(key, val)
+    Config[key] = val
+    SaveConfig()
+    
+    local statusText = val and "Enabled" or "Disabled"
+    local iconFormat = val and true or "131922379895080"
+    
+    Notify({
+        Title = "System Update",
+        Description = key .. " is now " .. statusText,
+        Duration = 2,
+        Icon = iconFormat
+    })
+end
+
+local function ScanAllWorlds()
+    local worlds = {}
+    for _, wf in ipairs(workspace:GetChildren()) do
+        if wf.Name:match("^World%d+$") and wf:FindFirstChild("Enemy") then
+            table.insert(worlds, wf.Name)
+        end
+    end
+    table.sort(worlds, function(a, b)
+        return tonumber(a:match("%d+")) < tonumber(b:match("%d+"))
+    end)
+    return worlds
+end
+
+local function IsInWorld(worldName)
+    local wf = workspace:FindFirstChild(worldName)
+    if wf then
+        if worldName:match("^World%d+$") then
+            return wf:FindFirstChild("Map") ~= nil
+        else
+            return true
+        end
+    end
+    return false
+end
+
+local function SmartTeleport(worldName, waitTime, force)
+    if force or not IsInWorld(worldName) then
+        pcall(function() 
+            Remotes:WaitForChild("Teleport"):FireServer(worldName) 
+        end)
+        task.wait(waitTime or 4)
+    end
+end
+
+-- FORWARD DECLARATION FOR UI TOGGLE
+local toggleWindow
+
+-- CIRCULAR TOGGLE BUTTON
+local btnGuiObj, btnFrame
+
+local function CreateFloatingIcon()
+    if btnGuiObj then pcall(function() btnGuiObj:Destroy() end) end
+    
+    local parent = GetSafeGuiParent()
+    local btnSize = 50
+    
+    btnGuiObj = Instance.new("ScreenGui")
+    btnGuiObj.Name = "VOX_Toggle_" .. math.random(100, 999)
+    btnGuiObj.ResetOnSpawn   = false
+    btnGuiObj.IgnoreGuiInset = true
+    btnGuiObj.DisplayOrder   = 9999999
+    btnGuiObj.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    btnGuiObj.Parent = parent
+
+    btnFrame = Instance.new("Frame")
+    btnFrame.Name = "ToggleButtonContainer"
+    btnFrame.Size     = UDim2.new(0, btnSize, 0, btnSize)
+    btnFrame.Position = UDim2.new(0.5, -25, 0.1, -25)
+    btnFrame.BackgroundTransparency = 1
+    btnFrame.Parent = btnGuiObj
+
+    local btnImg = Instance.new("ImageButton")
+    btnImg.Name = "ToggleButton"
+    btnImg.Parent = btnFrame
+    btnImg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    btnImg.BackgroundTransparency = 0
+    btnImg.AnchorPoint = Vector2.new(0.5, 0.5)
+    btnImg.Position = UDim2.new(0.5, 0, 0.5, 0)
+    btnImg.Size = UDim2.new(1, 0, 1, 0)
+    btnImg.Image = "rbxassetid://86949082023913"
+    btnImg.ZIndex = 100
+    Instance.new("UICorner", btnImg).CornerRadius = UDim.new(1, 0)
+
+    local isDragging = false
+    local dragStartPos = nil
+    local frameStartPos = nil
+    local hasMoved = false
+
+    btnImg.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isDragging = true
+            hasMoved = false
+            dragStartPos = input.Position
+            frameStartPos = btnFrame.Position
+
+            TweenService:Create(btnImg, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0.8, 0, 0.8, 0)
+            }):Play()
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStartPos
+            if delta.Magnitude > 5 then 
+                hasMoved = true
+                btnFrame.Position = UDim2.new(
+                    frameStartPos.X.Scale, frameStartPos.X.Offset + delta.X, 
+                    frameStartPos.Y.Scale, frameStartPos.Y.Offset + delta.Y
+                )
+            end
+        end
+    end)
+
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if isDragging then
+                isDragging = false
+
+                TweenService:Create(btnImg, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                    Size = UDim2.new(1, 0, 1, 0)
+                }):Play()
+
+                if not hasMoved then
+                    if type(toggleWindow) == "function" then
+                        toggleWindow()
+                    end
+                end
+                hasMoved = false
+            end
+        end
+    end)
+
+    task.spawn(function()
+        while btnGuiObj and btnGuiObj.Parent do
+            btnGuiObj.Enabled = true
+            task.wait(1)
+        end
+    end)
+end
+
+UIS.InputBegan:Connect(function(i, g)
+    if not g and i.KeyCode == Enum.KeyCode.RightControl then
+        CreateFloatingIcon()
+    end
+end)
+
+task.spawn(function()
+    task.wait(3)
+    CreateFloatingIcon()
+end)
+
+-- DEVICE SELECTOR SYSTEM
+if not Config.DeviceType then
+    local selectGui = Instance.new("ScreenGui")
+    selectGui.Name = "VOX_DeviceSelector"
+    selectGui.Parent = GetSafeGuiParent()
+    selectGui.DisplayOrder = 9999999
+    selectGui.IgnoreGuiInset = true
+
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1, 0, 1, 0)
+    bg.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    bg.BackgroundTransparency = 0.2
+    bg.Parent = selectGui
+
+    local modal = Instance.new("Frame")
+    modal.Size = UDim2.new(0, 320, 0, 180)
+    modal.Position = UDim2.new(0.5, -160, 0.5, -90)
+    modal.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    modal.BorderSizePixel = 0
+    modal.Parent = bg
+    Instance.new("UICorner", modal).CornerRadius = UDim.new(0, 8)
+    
+    local stroke = Instance.new("UIStroke", modal)
+    stroke.Color = Color3.fromRGB(80, 130, 255)
+    stroke.Thickness = 2
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 50)
+    title.BackgroundTransparency = 1
+    title.Text = "SELECT YOUR DEVICE"
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 18
+    title.Parent = modal
+
+    local sub = Instance.new("TextLabel")
+    sub.Size = UDim2.new(1, 0, 0, 20)
+    sub.Position = UDim2.new(0, 0, 0, 40)
+    sub.BackgroundTransparency = 1
+    sub.Text = "Adjust UI scale for your screen"
+    sub.TextColor3 = Color3.fromRGB(170, 170, 170)
+    sub.Font = Enum.Font.GothamMedium
+    sub.TextSize = 12
+    sub.Parent = modal
+
+    local btnPC = Instance.new("TextButton")
+    btnPC.Size = UDim2.new(0, 120, 0, 40)
+    btnPC.Position = UDim2.new(0, 25, 0, 95)
+    btnPC.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    btnPC.Text = "PC"
+    btnPC.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btnPC.Font = Enum.Font.GothamSemibold
+    btnPC.TextSize = 14
+    btnPC.Parent = modal
+    Instance.new("UICorner", btnPC).CornerRadius = UDim.new(0, 6)
+
+    local btnMobile = Instance.new("TextButton")
+    btnMobile.Size = UDim2.new(0, 120, 0, 40)
+    btnMobile.Position = UDim2.new(1, -145, 0, 95)
+    btnMobile.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    btnMobile.Text = "Mobile"
+    btnMobile.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btnMobile.Font = Enum.Font.GothamSemibold
+    btnMobile.TextSize = 14
+    btnMobile.Parent = modal
+    Instance.new("UICorner", btnMobile).CornerRadius = UDim.new(0, 6)
+
+    local chosen = false
+    btnPC.MouseButton1Click:Connect(function() Config.DeviceType = "PC"; chosen = true end)
+    btnMobile.MouseButton1Click:Connect(function() Config.DeviceType = "Mobile"; chosen = true end)
+
+    while not chosen do task.wait(0.1) end
+    SaveConfig()
+    selectGui:Destroy()
+end
+
+-- CASCADE APP
+setProgress(0.65, "Building interface...")
+
+local app = cascade.New({
+    Theme  = Config.DarkMode ~= false and cascade.Themes.Dark or cascade.Themes.Light,
+    Accent = cascade.Accents.Blue,
+})
+
+local beforeSet = {}
+for _, c in ipairs(TargetGuiParent:GetChildren()) do beforeSet[c] = true end
+
+local window = app:Window({
+    Title     = "Axel Hub | Anime Leveling",
+    Subtitle  = "Made by VOX",
+    Draggable = true,
+    Resizable = true,
+    Dropshadow = true,
+})
+
+local function NotifyError(featureName, errorMessage)
+    warn("⚠️ [VOX ERROR] " .. featureName .. ": " .. tostring(errorMessage))
+
+    pcall(function()
+        Notify({
+            Title       = "Function Error!",
+            Description = "Feature: " .. featureName .. " failed. Check F9.",
+            Duration    = 5
+        })
+    end)
+end
+
+local cascadeGui
+local cascadeGuiName = ""
+for _, c in ipairs(TargetGuiParent:GetChildren()) do
+    if not beforeSet[c] and c:IsA("ScreenGui") and c.Name ~= "VOX_Loader" and not string.match(c.Name, "^VOX_Toggle_") then 
+        cascadeGui = c
+        cascadeGuiName = c.Name
+        break 
+    end
+end
+
+if cascadeGui then
+    task.spawn(function()
+        if Config.DeviceType == "Mobile" then
+            local mainFrame = nil
+            while not mainFrame do
+                for _, child in ipairs(cascadeGui:GetChildren()) do
+                    if child:IsA("GuiObject") then
+                        mainFrame = child
+                        break
+                    end
+                end
+                task.wait(0.2)
+            end
+            
+            task.wait(0.5)
+            
+            for _, child in ipairs(cascadeGui:GetChildren()) do
+                if child:IsA("GuiObject") then
+                    local uiScale = child:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
+                    uiScale.Scale = 0.45
+                    uiScale.Parent = child
+                end
+            end
+        end
+    end)
+end
+
+local windowVisible = true
+toggleWindow = function()
+    windowVisible = not windowVisible
+    pcall(function() window.Visible = windowVisible end)
+    pcall(function() window:SetVisible(windowVisible) end)
+    
+    if cascadeGui and cascadeGui.Parent then 
+        cascadeGui.Enabled = windowVisible 
+    else
+        local found = TargetGuiParent:FindFirstChild(cascadeGuiName)
+        if found then
+            cascadeGui = found
+            cascadeGui.Enabled = windowVisible
+        end
+    end
+end
+
+UIS.InputBegan:Connect(function(input, gpe)
+    if not gpe and input.KeyCode == MinimizeKey then
+        toggleWindow()
+    end
+end)
+
+local secHome   = window:Section({ Title = "Home" })
+local secFarm   = window:Section({ Title = "Farming" })
+local secPlayer = window:Section({ Title = "Player & World" })
+local secSystem = window:Section({ Title = "System" })
+
+-- TAB: DASHBOARD
+local tabHome = secHome:Tab({Selected = true, Title = "Dashboard", Icon = cascade.Symbols.grid })
+do
+    local psPlayer = tabHome:PageSection({ Title = "Player Information" })
+    local fPlayer  = psPlayer:Form()
+
+    local pName = LocalPlayer.Name
+    local pDisplay = LocalPlayer.DisplayName
+    local pId = tostring(LocalPlayer.UserId)
+    local accountAge = tostring(LocalPlayer.AccountAge) .. " Days"
+
+    local rowUser = fPlayer:Row()
+    rowUser:Left():TitleStack({ Title = "Username", Subtitle = "@" .. pName })
+    rowUser:Right():TitleStack({ Title = "Display Name", Subtitle = pDisplay })
+
+    local rowDetail = fPlayer:Row()
+    rowDetail:Left():TitleStack({ Title = "User ID", Subtitle = pId })
+    rowDetail:Right():TitleStack({ Title = "Account Age", Subtitle = accountAge })
+
+    local rowAction = fPlayer:Row()
+    rowAction:Left():TitleStack({ Title = "Character Actions", Subtitle = "Reset or check status" })
+    rowAction:Right():Button({ 
+        Label = "Reset Character", 
+        Pushed = function()
+            pcall(function()
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                    LocalPlayer.Character.Humanoid.Health = 0
+                    Notify({ Title = "Player Info", Description = "Character Reset!", Duration = 3, Icon = true })
+                end
+            end)
+        end 
+    })
+
+    local psInfo = tabHome:PageSection({ Title = "Script Information" })
+    local fInfo  = psInfo:Form()
+
+    fInfo:Row():Left():TitleStack({ 
+        Title = "Anime Leveling", 
+        Subtitle = "Version: 1 | Status: Release" 
+    })
+
+    fInfo:Row():Left():TitleStack({ 
+        Title = "Created By", 
+        Subtitle = "VOX" 
+    })
+
+    local psSocial = tabHome:PageSection({ Title = "Social & Community" })
+    local fSocial  = psSocial:Form()
+
+    local rowDiscord = fSocial:Row()
+    rowDiscord:Left():TitleStack({ 
+        Title = "Official Discord Server", 
+        Subtitle = "Join our HUB for updates and support!" 
+    })
+    
+    rowDiscord:Right():Button({ 
+        Label = "Join Discord", 
+        Pushed = function()
+            local discordLink = "https://discord.gg/axelhub"
+            
+            pcall(function() setclipboard(discordLink) end)
+            
+            pcall(function()
+                if syn and syn.request then
+                    syn.request({Url = "http://127.0.0.1:6463/rpc?v=1", Method = "POST", Headers = {["Content-Type"] = "application/json", ["Origin"] = "https://discord.com"}, Body = game:GetService("HttpService"):JSONEncode({cmd = "INVITE_BROWSER", args = {code = string.match(discordLink, "discord.gg/(.+)") or string.match(discordLink, "discord.com/invite/(.+)")}, nonce = game:GetService("HttpService"):GenerateGUID(false)})})
+                end
+            end)
+
+            Notify({
+                Title = "Discord",
+                Description = "Link copied to clipboard!",
+                Duration = 5,
+                Icon = true
+            })
+        end 
+    })
+
+    local psLog = tabHome:PageSection({ Title = "Change Log" })
+    local fLog  = psLog:Form()
+    
+    fLog:Row():Left():TitleStack({ 
+        Title = "Update v1", 
+        Subtitle = "- Release" 
+    })
+end
+
+-- TAB: MAIN
+local tabMain = secFarm:Tab({ Title = "Main", Icon = cascade.Symbols.house })
+do
+    local WorldQuestData = {
+        World1 = { Common={Pet="Tienzo",Needed=1000}, Uncommon={Pet="Krellin",Needed=750}, Rare={Pet="Yamto",Needed=500}, Epic={Pet="Picor",Needed=250}, Legendary={Pet="Vegeo",Needed=75}, Mythical={Pet="Gokuza",Needed=25} },
+        World2 = { Common={Pet="Zaro",Needed=2000}, Uncommon={Pet="Saji",Needed=1000}, Rare={Pet="Fujiko",Needed=750}, Epic={Pet="Aceon",Needed=500}, Legendary={Pet="Lorin",Needed=150}, Mythical={Pet="Dofiro",Needed=50} },
+        World3 = { Common={Pet="Noella_Silven",Needed=3500}, Uncommon={Pet="Dark_Captain",Needed=2000}, Rare={Pet="Maroe_Vermilion",Needed=1250}, Epic={Pet="Zenoa",Needed=750}, Legendary={Pet="Yoru",Needed=250}, Mythical={Pet="Astra",Needed=75} },
+        World4 = { Common={Pet="Nezura",Needed=5000}, Uncommon={Pet="Zensuto",Needed=3000}, Rare={Pet="Inosaku",Needed=1750}, Epic={Pet="Tango",Needed=1000}, Legendary={Pet="Muzen",Needed=500}, Mythical={Pet="Tajiro",Needed=150} },
+        World5 = { Common={Pet="Nishiro_Nishida",Needed=7500}, Uncommon={Pet="Eto_Yozaku",Needed=5000}, Rare={Pet="Taro",Needed=3000}, Epic={Pet="Juzo_Suzuri",Needed=1750}, Legendary={Pet="Toka",Needed=750}, Mythical={Pet="Ken_Kaneki",Needed=250} },
+        World6 = { Common={Pet="Toshiroo",Needed=10000}, Uncommon={Pet="Grimmwow",Needed=6000}, Rare={Pet="Shinshi",Needed=3500}, Epic={Pet="Rukika",Needed=2000}, Legendary={Pet="Kenpaki",Needed=1000}, Mythical={Pet="Ichigoat",Needed=350} },
+    }
+    
+    local psAA = tabMain:PageSection({ Title = "Auto Attack" })
+    local fAA  = psAA:Form()
+
+    local rowAC = fAA:Row()
+    rowAC:Left():TitleStack({ Title = "Auto Click (Fast)" })
+    local togAC = rowAC:Right():Toggle({
+        Value = cfgBool("AutoClick"),
+        ValueChanged = function(self, val)
+            getgenv().AutoClick = val; SaveToggle("AutoClick", val)
+            if val then task.spawn(function()
+                while getgenv().AutoClick do
+                    Remotes:WaitForChild("Clicked"):FireServer()
+                    task.wait(0.05)
+                end
+            end) end
+        end
+    })
+    ToggleRefs["AutoClick"] = togAC
+
+    local psRank = tabMain:PageSection({ Title = "Rank Up" })
+    local fRank  = psRank:Form()
+
+    local rowRU = fRank:Row()
+    rowRU:Left():TitleStack({ Title="Auto Rank Up" })
+    local togRU = rowRU:Right():Toggle({
+        Value = cfgBool("AutoRankUp"),
+        ValueChanged = function(self, val)
+            getgenv().AutoRankUp = val; SaveToggle("AutoRankUp", val)
+            if val then task.spawn(function()
+                while getgenv().AutoRankUp do
+                    pcall(function() Remotes.UpdateRank:FireServer() end)
+                    task.wait(1) 
+                end
+            end) end
+        end
+    })
+
+    local psEquip = tabMain:PageSection({ Title = "Equip Best" })
+    local fEquip  = psEquip:Form()
+
+    local rowEquip = fEquip:Row()
+    rowEquip:Left():TitleStack({ Title = "Auto Equip Best" })
+    rowEquip:Right():Toggle({
+        Value = cfgBool("AutoEquipBest"),
+        ValueChanged = function(self, val)
+            getgenv().AutoEquipBest = val; SaveToggle("AutoEquipBest", val)
+            if val then task.spawn(function()
+                while getgenv().AutoEquipBest do
+                    pcall(function()
+                        if not remotes then return end
+                        
+                        local morphRemotes = remotes:FindFirstChild("MorphPets")
+                        if morphRemotes and morphRemotes:FindFirstChild("EquipBestMorphPets") then
+                            morphRemotes.EquipBestMorphPets:FireServer()
+                        end
+                        
+                        local petRemotes = remotes:FindFirstChild("Pets")
+                        if petRemotes and petRemotes:FindFirstChild("EquipBestPets") then
+                            petRemotes.EquipBestPets:FireServer()
+                        end
+                        
+                        local accRemotes = remotes:FindFirstChild("Accessories")
+                        if accRemotes and accRemotes:FindFirstChild("EquipBestAccessories") then
+                            accRemotes.EquipBestAccessories:FireServer()
+                        end
+                    end)
+                    task.wait(60)
+                end
+            end) end
+        end
+    })
+
+    local psWQ = tabMain:PageSection({ Title = "World Quest" })
+    local fWQ  = psWQ:Form()
+
+    local SelectedQuestWorld = Config.QuestWorld or "World1"
+    local questOpts = ScanAllWorlds()
+    if #questOpts == 0 then questOpts = {"World1","World2","World3","World4","World5","World6"} end
+    if not table.find(questOpts, SelectedQuestWorld) then SelectedQuestWorld = questOpts[1] end
+
+    local rowQW = fWQ:Row()
+    rowQW:Left():TitleStack({ Title = "Select Quest World" })
+    local questPopup = rowQW:Right():PopUpButton({ 
+        Options = questOpts, 
+        Value = table.find(questOpts, SelectedQuestWorld) or 1,
+        ValueChanged = function(self, idx)
+            local opt = questOpts[idx]
+            SelectedQuestWorld = opt
+            Config.QuestWorld = opt
+            SaveConfig()
+        end 
+    })
+
+    local rowQRef = fWQ:Row()
+    rowQRef:Left():TitleStack({ Title = "Refresh World List" })
+    rowQRef:Right():Button({ Label = "Refresh", Pushed = function()
+        task.defer(function()
+            local newWorlds = ScanAllWorlds()
+            if #newWorlds == 0 then return end
+            questOpts = newWorlds
+            pcall(function() questPopup.Options = newWorlds end)
+            pcall(function() questPopup.Value = table.find(newWorlds, SelectedQuestWorld) or 1 end)
+        end)
+    end})
+
+    local function CreateTracker()
+        pcall(function()
+            local oldGui = GetSafeGuiParent():FindFirstChild("VOX_QuestTracker")
+            if oldGui then oldGui:Destroy() end
+        end)
+
+        local trackerGui = Instance.new("ScreenGui")
+        trackerGui.Name = "VOX_QuestTracker"
+        trackerGui.Parent = GetSafeGuiParent()
+
+        local mainFrame = Instance.new("Frame")
+        mainFrame.Size = UDim2.new(0, 300, 0, 100) 
+        mainFrame.Position = UDim2.new(0.5, -150, 0, 20)
+        mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20) 
+        mainFrame.BackgroundTransparency = 0.15 
+        mainFrame.BorderSizePixel = 0
+        mainFrame.Active = true 
+        mainFrame.ClipsDescendants = true
+        mainFrame.Parent = trackerGui
+
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 8) 
+        corner.Parent = mainFrame
+
+        local stroke = Instance.new("UIStroke")
+        stroke.Thickness = 1
+        stroke.Color = Color3.fromRGB(255, 255, 255)
+        stroke.Transparency = 0.85 
+        stroke.Parent = mainFrame
+
+        local mainGrad = Instance.new("UIGradient")
+        mainGrad.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 35)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 20))
+        })
+        mainGrad.Rotation = 45
+        mainGrad.Parent = mainFrame
+
+        local titleLbl = Instance.new("TextLabel")
+        titleLbl.Text = "WORLD QUEST"
+        titleLbl.Size = UDim2.new(1, -30, 0, 30)
+        titleLbl.Position = UDim2.new(0, 15, 0, 0)
+        titleLbl.BackgroundTransparency = 1
+        titleLbl.TextColor3 = Color3.fromRGB(220, 220, 240)
+        titleLbl.Font = Enum.Font.GothamBold
+        titleLbl.TextSize = 12
+        titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+        titleLbl.Parent = mainFrame
+
+        local minBtn = Instance.new("TextButton")
+        minBtn.Name = "MinimizeButton"
+        minBtn.Size = UDim2.new(0, 30, 0, 30)
+        minBtn.Position = UDim2.new(1, -30, 0, 0)
+        minBtn.BackgroundTransparency = 1
+        minBtn.Text = "-"
+        minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        minBtn.Font = Enum.Font.GothamBold
+        minBtn.TextSize = 16
+        minBtn.Parent = mainFrame
+
+        local line = Instance.new("Frame")
+        line.Size = UDim2.new(0.9, 0, 0, 1)
+        line.Position = UDim2.new(0.05, 0, 0, 30)
+        line.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        line.BackgroundTransparency = 0.85
+        line.BorderSizePixel = 0
+        line.Parent = mainFrame
+
+        local contentFrame = Instance.new("Frame")
+        contentFrame.Name = "Content"
+        contentFrame.Size = UDim2.new(1, 0, 1, -31)
+        contentFrame.Position = UDim2.new(0, 0, 0, 31)
+        contentFrame.BackgroundTransparency = 1
+        contentFrame.Parent = mainFrame
+
+        local monsterLbl = Instance.new("TextLabel")
+        monsterLbl.Name = "MonsterLabel"
+        monsterLbl.Text = "Target: Scanning..."
+        monsterLbl.Size = UDim2.new(1, -30, 0, 20)
+        monsterLbl.Position = UDim2.new(0, 15, 0, 9)
+        monsterLbl.BackgroundTransparency = 1
+        monsterLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+        monsterLbl.Font = Enum.Font.GothamSemibold
+        monsterLbl.TextSize = 13
+        monsterLbl.TextXAlignment = Enum.TextXAlignment.Left
+        monsterLbl.Parent = contentFrame
+
+        local barBg = Instance.new("Frame")
+        barBg.Size = UDim2.new(1, -30, 0, 18)
+        barBg.Position = UDim2.new(0, 15, 0, 37)
+        barBg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        barBg.BorderSizePixel = 0
+        barBg.Parent = contentFrame
+        Instance.new("UICorner", barBg).CornerRadius = UDim.new(1, 0)
+
+        local barFill = Instance.new("Frame")
+        barFill.Name = "ProgressBar"
+        barFill.Size = UDim2.new(0, 0, 1, 0)
+        barFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        barFill.BorderSizePixel = 0
+        barFill.Parent = barBg
+        Instance.new("UICorner", barFill).CornerRadius = UDim.new(1, 0)
+        
+        local barGrad = Instance.new("UIGradient")
+        barGrad.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 130, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(160, 100, 255))
+        })
+        barGrad.Parent = barFill
+
+        local statLbl = Instance.new("TextLabel")
+        statLbl.Name = "StatLabel"
+        statLbl.Text = "0 / 0"
+        statLbl.Size = UDim2.new(1, 0, 1, 0)
+        statLbl.BackgroundTransparency = 1
+        statLbl.Font = Enum.Font.GothamBold 
+        statLbl.TextSize = 11
+        statLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+        statLbl.TextXAlignment = Enum.TextXAlignment.Center
+        statLbl.ZIndex = 5 
+        statLbl.Parent = barBg
+
+        local isMinimized = false
+        minBtn.MouseButton1Click:Connect(function()
+            isMinimized = not isMinimized
+            if isMinimized then
+                minBtn.Text = "+"
+                TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, 300, 0, 30)}):Play()
+            else
+                minBtn.Text = "-"
+                TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, 300, 0, 100)}):Play()
+            end
+        end)
+
+        local dragging, dragInput, dragStart, startPos
+        local function update(input)
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+
+        mainFrame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                dragStart = input.Position
+                startPos = mainFrame.Position
+
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        dragging = false
+                    end
+                end)
+            end
+        end)
+
+        mainFrame.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                dragInput = input
+            end
+        end)
+
+        UIS.InputChanged:Connect(function(input)
+            if input == dragInput and dragging then
+                update(input)
+            end
+        end)
+
+        TweenService:Create(mainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, 300, 0, 100)}):Play()
+
+        return trackerGui, monsterLbl, statLbl, barFill
+    end
+
+    local rowAWQ = fWQ:Row()
+    rowAWQ:Left():TitleStack({ Title = "Auto Farm World Quest" })
+    local togAWQ = rowAWQ:Right():Toggle({
+        Value = cfgBool("AutoWorldQuest"),
+        ValueChanged = function(self, val)
+            getgenv().AutoWorldQuest = val
+            SaveToggle("AutoWorldQuest", val)
+            
+            pcall(function()
+                local oldGui = GetSafeGuiParent():FindFirstChild("VOX_QuestTracker")
+                if oldGui then oldGui:Destroy() end
+            end)
+
+            if not val then return end
+
+            local trackerGui, monsterLbl, statLbl, barFill = CreateTracker()
+
+            task.spawn(function()
+                local targetWorldForQuest = SelectedQuestWorld
+                SmartTeleport(targetWorldForQuest, 2.5)
+                
+                pcall(function()
+                    local framePath = PlayerGui.Main.Frames:FindFirstChild(targetWorldForQuest .. "Quest")
+                    if framePath and framePath:GetAttribute("Open") ~= true then
+                        local oldPos = framePath.Position
+                        framePath.Position = UDim2.new(999, 0, 999, 0)
+                        framePath:SetAttribute("Open", true)
+                        task.wait(0.2)
+                        framePath:SetAttribute("Open", false)
+                        framePath.Position = oldPos
+                    end
+                end)
+
+                local tempTarget = nil
+                local TrackedKills = {}
+                local lastSyncTime = tick()
+                
+                while getgenv().AutoWorldQuest do
+                    pcall(function()
+                        local playerChar = LocalPlayer.Character
+                        if playerChar and playerChar:FindFirstChild("HumanoidRootPart") then
+                            local hrp = playerChar.HumanoidRootPart
+                            local worldFolder = workspace:FindFirstChild(targetWorldForQuest)
+                            if worldFolder and worldFolder:FindFirstChild("Spawn") then
+                                local spawnDist = (hrp.Position - worldFolder.Spawn.Position).Magnitude
+                                if spawnDist > 10000 then 
+                                    SmartTeleport(targetWorldForQuest, 2.5, true)
+                                    tempTarget = nil 
+                                end
+                            end
+                        end
+                    end)
+
+                    pcall(function()
+                        if tick() - lastSyncTime >= 30 then
+                            lastSyncTime = tick()
+                            local framePath = PlayerGui.Main.Frames:FindFirstChild(targetWorldForQuest .. "Quest")
+                            if framePath and framePath:GetAttribute("Open") ~= true then
+                                local oldPos = framePath.Position
+                                framePath.Position = UDim2.new(999, 0, 999, 0)
+                                framePath:SetAttribute("Open", true)
+                                task.wait(0.2)
+                                framePath:SetAttribute("Open", false)
+                                framePath.Position = oldPos
+                            end
+                        end
+                        
+                        local activeRarity = nil
+                        local raritiesTracker = {"Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythical"}
+                        
+                        for _, r in ipairs(raritiesTracker) do
+                            local trackKey = targetWorldForQuest .. "_" .. r
+                            local framePath = PlayerGui.Main.Frames:FindFirstChild(targetWorldForQuest .. "Quest")
+                            local realAmount = 0
+                            if framePath and framePath.Container.Frame:FindFirstChild(r) then
+                                local amountLabel = framePath.Container.Frame[r].Unit:FindFirstChild("Amount")
+                                if amountLabel then
+                                    local strAmount = string.match(amountLabel.Text, "^(%d+)") or string.match(amountLabel.Text, "(%d+)")
+                                    realAmount = tonumber(strAmount) or 0
+                                    if not TrackedKills[trackKey] then TrackedKills[trackKey] = realAmount end
+                                    if framePath:GetAttribute("Open") == true or framePath.Visible then
+                                        TrackedKills[trackKey] = realAmount
+                                    elseif realAmount > TrackedKills[trackKey] then
+                                        TrackedKills[trackKey] = realAmount
+                                    end
+                                end
+                            end
+                            
+                            local currentAmount = TrackedKills[trackKey] or 0
+                            local needed = WorldQuestData[targetWorldForQuest][r].Needed
+                            if currentAmount < needed then
+                                activeRarity = r
+                                break
+                            else
+                                Remotes:WaitForChild("ClaimWorldQuest"):FireServer(targetWorldForQuest, r)
+                            end
+                        end
+                        
+                        if activeRarity then
+                            local trackKey = targetWorldForQuest .. "_" .. activeRarity
+                            local targetPetName = WorldQuestData[targetWorldForQuest][activeRarity].Pet
+                            local needed = WorldQuestData[targetWorldForQuest][activeRarity].Needed
+                            local currentAmount = TrackedKills[trackKey] or 0
+                            
+                            if monsterLbl and statLbl and barFill then
+                                monsterLbl.Text = "Target: " .. tostring(targetPetName) .. " (" .. activeRarity .. ")"
+                                local remain = needed - currentAmount
+                                if remain < 0 then remain = 0 end
+                                statLbl.Text = currentAmount .. " / " .. needed .. " (Left: " .. remain .. ")"
+                                
+                                local pct = math.clamp(currentAmount / needed, 0, 1)
+                                TweenService:Create(barFill, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(pct, 0, 1, 0)}):Play()
+                            end
+
+                            if targetPetName then
+                                local function IsAliveQuest(monster)
+                                    if not monster or not monster.Parent then return false end
+                                    if monster.Name ~= targetPetName then return false end
+                                    if not monster:FindFirstChild("HumanoidRootPart") then return false end
+                                    if monster:GetAttribute("Turnable") == false then return false end
+                                    local hum = monster:FindFirstChild("Humanoid")
+                                    return not (hum and hum.Health <= 0)
+                                end
+                                
+                                if tempTarget and not IsAliveQuest(tempTarget) then
+                                    tempTarget = nil
+                                    if TrackedKills[trackKey] then TrackedKills[trackKey] = TrackedKills[trackKey] + 1 end
+                                end
+
+                                if not IsAliveQuest(tempTarget) then
+                                    tempTarget = nil
+                                    local enemyFolder = workspace:FindFirstChild(targetWorldForQuest) and workspace[targetWorldForQuest]:FindFirstChild("Enemy")
+                                    if enemyFolder then
+                                        for _, v in ipairs(enemyFolder:GetChildren()) do
+                                            if IsAliveQuest(v) then
+                                                tempTarget = v
+                                                break
+                                            end
+                                        end
+                                    end
+                                end
+
+                                if tempTarget and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                                    local hrp = LocalPlayer.Character.HumanoidRootPart
+                                    local mHrp = tempTarget.HumanoidRootPart
+                                    if (hrp.Position - mHrp.Position).Magnitude > 6 then
+                                        hrp.CFrame = CFrame.new(mHrp.Position + Vector3.new(2, 0, 3), mHrp.Position)
+                                    end
+                                end
+                            end
+                        else
+                            if monsterLbl and statLbl and barFill then
+                                monsterLbl.Text = "All Quests Completed!"
+                                statLbl.Text = "Waiting for next cycle..."
+                                TweenService:Create(barFill, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 1, 0)}):Play()
+                            end
+                        end
+                    end)
+                    task.wait(0.1)
+                end
+                
+                if trackerGui then trackerGui:Destroy() end
+            end)
+        end,
+    })
+    ToggleRefs["AutoWorldQuest"] = togAWQ
+
+    local psStd = tabMain:PageSection({ Title = "Main Farm" })
+    local fStd  = psStd:Form()
+
+    local function GetActiveEnemyFolder()
+        for _, wf in ipairs(workspace:GetChildren()) do
+            if wf.Name:match("^World%d+$") and wf:FindFirstChild("Map") then
+                local ef = wf:FindFirstChild("Enemy")
+                if ef then return ef end
+            end
+        end
+        return nil
+    end
+
+    local SelectedMonster = Config.SelectedMonster or ""
+    local monsterPopup
+    local isRefreshing = false
+
+    local rowMon = fStd:Row()
+    rowMon:Left():TitleStack({ Title = "Select Monster" })
+    monsterPopup = rowMon:Right():PopUpButton({ 
+        Options={"Loading..."}, 
+        Value=1, 
+        ValueChanged=function(self, opt)
+            if isRefreshing then return end 
+            
+            if self.Options[opt] and self.Options[opt] ~= "Loading..." and self.Options[opt] ~= "Scanning Map..." and self.Options[opt] ~= "No Map Detected" then
+                SelectedMonster = self.Options[opt]
+                Config.SelectedMonster = SelectedMonster
+                
+                local ef = GetActiveEnemyFolder()
+                if ef and ef.Parent then
+                    Config.SelectedFarmWorld = ef.Parent.Name
+                end
+                
+                SaveConfig()
+            end
+        end 
+    })
+
+    local function RefreshMonsters()
+        isRefreshing = true 
+        
+        monsterPopup.Options = {"Scanning Map..."}
+        monsterPopup.Value = 1
+        
+        local temp, finalNames = {}, {}
+        local enemyFolder = GetActiveEnemyFolder()
+        
+        if enemyFolder then
+            for _, v in ipairs(enemyFolder:GetChildren()) do
+                if v:IsA("Model") and not temp[v.Name] then
+                    temp[v.Name] = true
+                    table.insert(finalNames, v.Name)
+                end
+            end
+        end
+
+        if #finalNames > 0 then
+            table.sort(finalNames)
+            monsterPopup.Options = finalNames
+            
+            local savedTarget = Config.SelectedMonster
+            local savedIdx = table.find(finalNames, savedTarget)
+            
+            if savedIdx then
+                monsterPopup.Value = savedIdx
+                SelectedMonster = savedTarget
+            else
+                monsterPopup.Value = 1
+                SelectedMonster = finalNames[1]
+                Config.SelectedMonster = SelectedMonster
+                if enemyFolder and enemyFolder.Parent then
+                    Config.SelectedFarmWorld = enemyFolder.Parent.Name
+                end
+                SaveConfig()
+            end
+        else
+            monsterPopup.Options = {"No Map Detected"}
+            monsterPopup.Value = 1
+            SelectedMonster = ""
+        end
+        
+        isRefreshing = false 
+    end
+
+    local rowRef = fStd:Row()
+    rowRef:Left():TitleStack({ Title = "Refresh Enemy List" })
+    rowRef:Right():Button({ Label="Refresh", Pushed=function() RefreshMonsters() end })
+    
+    task.spawn(function()
+        local waitCount = 0
+        while not GetActiveEnemyFolder() and waitCount < 100 do
+            task.wait(0.1)
+            waitCount = waitCount + 1
+        end
+        RefreshMonsters()
+    end)
+
+    local CurrentTarget = nil
+    local rowAT = fStd:Row()
+    rowAT:Left():TitleStack({ Title="Auto Teleport Mobs" })
+    local togAT = rowAT:Right():Toggle({
+        Value = cfgBool("AutoTeleport"),
+        ValueChanged = function(self, val)
+            getgenv().AutoTeleport = val; SaveToggle("AutoTeleport", val)
+            if val then task.spawn(function()
+                while getgenv().AutoTeleport do
+                    pcall(function()
+                        if SelectedMonster ~= "" and SelectedMonster ~= "Loading..." and SelectedMonster ~= "No Map Detected" then
+                            
+                            local targetWorld = Config.SelectedFarmWorld
+                            if targetWorld and targetWorld ~= "" then
+                                local wf = workspace:FindFirstChild(targetWorld)
+                                if not wf or not wf:FindFirstChild("Map") then
+                                    CurrentTarget = nil
+                                    SmartTeleport(targetWorld, 4, false)
+                                    return
+                                end
+                            end
+
+                            local function IsAliveAndValid(monster)
+                                if not monster or not monster.Parent then return false end
+                                if monster.Name ~= SelectedMonster then return false end
+                                if not monster:FindFirstChild("HumanoidRootPart") then return false end
+                                if monster:GetAttribute("Turnable") == false then return false end
+                                local hum = monster:FindFirstChild("Humanoid")
+                                return not (hum and hum.Health <= 0)
+                            end
+
+                            if not IsAliveAndValid(CurrentTarget) then
+                                CurrentTarget = nil
+                                local enemyFolder = GetActiveEnemyFolder()
+                                if enemyFolder then
+                                    for _, v in ipairs(enemyFolder:GetChildren()) do 
+                                        if IsAliveAndValid(v) then CurrentTarget = v; break end
+                                    end
+                                end
+                            end
+                            
+                            local pc = LocalPlayer.Character
+                            if CurrentTarget and pc and pc:FindFirstChild("HumanoidRootPart") then
+                                local hrp = pc.HumanoidRootPart
+                                local mHrp = CurrentTarget.HumanoidRootPart
+                                if (hrp.Position - mHrp.Position).Magnitude > 6 then
+                                    hrp.CFrame = CFrame.new(mHrp.Position + Vector3.new(2, 0, 3), mHrp.Position)
+                                end
+                            end
+                        end
+                    end)
+                    task.wait(0.1) 
+                end
+                if not getgenv().AutoTeleport then CurrentTarget = nil end
+            end) end
+        end,
+    })
+    ToggleRefs["AutoTeleport"] = togAT
+end
+
+-- TAB: GACHA
+local tabGacha = secFarm:Tab({ Title = "Gacha", Icon = cascade.Symbols.sparkles })
+do
+    local psGEvent = tabGacha:PageSection({ Title = "Event" })
+    local fGEvent  = psGEvent:Form()
+
+    local rowEaster = fGEvent:Row()
+    rowEaster:Left():TitleStack({ Title = "Auto Roll Easter Power" })
+    rowEaster:Right():Toggle({
+        Value = cfgBool("AutoRollEaster"),
+        ValueChanged = function(self, val)
+            getgenv().AutoRollEaster = val; SaveToggle("AutoRollEaster", val)
+            if val then task.spawn(function()
+                while getgenv().AutoRollEaster do pcall(function() Remotes.RollEasterPower:FireServer() end); task.wait(0.5) end
+            end) end
+        end
+    })
+
+    local psGW1 = tabGacha:PageSection({ Title = "World 1" })
+    local fGW1  = psGW1:Form()
+
+    local rowW1A = fGW1:Row()
+    rowW1A:Left():TitleStack({ Title = "Auto Roll Saiyan Power" })
+    rowW1A:Right():Toggle({
+        Value = cfgBool("AutoRollSaiyan"),
+        ValueChanged = function(self, val)
+            getgenv().AutoRollSaiyan = val; SaveToggle("AutoRollSaiyan", val)
+            if val then task.spawn(function() while getgenv().AutoRollSaiyan do pcall(function() Remotes.RollSaiyanPower:FireServer() end); task.wait(0.5) end end) end
+        end
+    })
+    local rowW1B = fGW1:Row()
+    rowW1B:Left():TitleStack({ Title = "Auto Roll Dragon Ball Power" })
+    rowW1B:Right():Toggle({
+        Value = cfgBool("AutoRollDragonball"),
+        ValueChanged = function(self, val)
+            getgenv().AutoRollDragonball = val; SaveToggle("AutoRollDragonball", val)
+            if val then task.spawn(function() while getgenv().AutoRollDragonball do pcall(function() Remotes.RollDragonBallPower:FireServer() end); task.wait(0.5) end end) end
+        end
+    })
+
+    local psGW2 = tabGacha:PageSection({ Title = "World 2" })
+    local fGW2  = psGW2:Form()
+
+    local rowW2A = fGW2:Row()
+    rowW2A:Left():TitleStack({ Title = "Auto Roll Fruits Power" })
+    rowW2A:Right():Toggle({
+        Value = cfgBool("AutoRollFruits"),
+        ValueChanged = function(self, val)
+            getgenv().AutoRollFruits = val; SaveToggle("AutoRollFruits", val)
+            if val then task.spawn(function() while getgenv().AutoRollFruits do pcall(function() Remotes.RollFruitPower:FireServer() end); task.wait(0.5) end end) end
+        end
+    })
+    local rowW2B = fGW2:Row()
+    rowW2B:Left():TitleStack({ Title = "Auto Roll Blessing Power" })
+    rowW2B:Right():Toggle({
+        Value = cfgBool("AutoRollBlessing"),
+        ValueChanged = function(self, val)
+            getgenv().AutoRollBlessing = val; SaveToggle("AutoRollBlessing", val)
+            if val then task.spawn(function() while getgenv().AutoRollBlessing do pcall(function() Remotes.RollBlessingPower:FireServer() end); task.wait(0.5) end end) end
+        end
+    })
+
+    local psGW3 = tabGacha:PageSection({ Title = "World 3" })
+    local fGW3  = psGW3:Form()
+
+    local rowW3A = fGW3:Row()
+    rowW3A:Left():TitleStack({ Title = "Auto Roll Prosperity Power" })
+    rowW3A:Right():Toggle({
+        Value = cfgBool("AutoRollProsperity"),
+        ValueChanged = function(self, val)
+            getgenv().AutoRollProsperity = val; SaveToggle("AutoRollProsperity", val)
+            if val then task.spawn(function() while getgenv().AutoRollProsperity do pcall(function() Remotes.RollProsperityPower:FireServer() end); task.wait(0.5) end end) end
+        end
+    })
+    local rowW3B = fGW3:Row()
+    rowW3B:Left():TitleStack({ Title = "Auto Roll Grimoires Power" })
+    rowW3B:Right():Toggle({
+        Value = cfgBool("AutoRollGrimoires"),
+        ValueChanged = function(self, val)
+            getgenv().AutoRollGrimoires = val; SaveToggle("AutoRollGrimoires", val)
+            if val then task.spawn(function() while getgenv().AutoRollGrimoires do pcall(function() Remotes.RollGrimoiresPower:FireServer() end); task.wait(0.5) end end) end
+        end
+    })
+    local rowW3C = fGW3:Row()
+    rowW3C:Left():TitleStack({ Title = "Auto Roll Demon Power" })
+    rowW3C:Right():Toggle({
+        Value = cfgBool("AutoRollDemon"),
+        ValueChanged = function(self, val)
+            getgenv().AutoRollDemon = val; SaveToggle("AutoRollDemon", val)
+            if val then task.spawn(function() while getgenv().AutoRollDemon do pcall(function() Remotes.RollDemonPower:FireServer() end); task.wait(0.5) end end) end
+        end
+    })
+
+    local psGW4 = tabGacha:PageSection({ Title = "World 4" })
+    local fGW4  = psGW4:Form()
+
+    local rowW4A = fGW4:Row()
+    rowW4A:Left():TitleStack({ Title = "Auto Roll Breathing Power" })
+    rowW4A:Right():Toggle({
+        Value = cfgBool("AutoRollBreathing"),
+        ValueChanged = function(self, val)
+            getgenv().AutoRollBreathing = val; SaveToggle("AutoRollBreathing", val)
+            if val then task.spawn(function() while getgenv().AutoRollBreathing do pcall(function() Remotes.RollBreathingPower:FireServer() end); task.wait(0.5) end end) end
+        end
+    })
+
+    local psGW5 = tabGacha:PageSection({ Title = "World 5" })
+    local fGW5  = psGW5:Form()
+
+    local rowW5A = fGW5:Row()
+    rowW5A:Left():TitleStack({ Title = "Auto Roll Mask Power" })
+    rowW5A:Right():Toggle({
+        Value = cfgBool("AutoRollMask"),
+        ValueChanged = function(self, val)
+            getgenv().AutoRollMask = val; SaveToggle("AutoRollMask", val)
+            if val then task.spawn(function() while getgenv().AutoRollMask do pcall(function() Remotes.RollMaskPower:FireServer() end); task.wait(0.5) end end) end
+        end
+    })
+
+    local psGW6 = tabGacha:PageSection({ Title = "World 6" })
+    local fGW6  = psGW6:Form()
+
+    local rowW6A = fGW6:Row()
+    rowW6A:Left():TitleStack({ Title = "Auto Roll Race Power" })
+    rowW6A:Right():Toggle({
+        Value = cfgBool("AutoRollRace"),
+        ValueChanged = function(self, val)
+            getgenv().AutoRollRace = val; SaveToggle("AutoRollRace", val)
+            if val then task.spawn(function() while getgenv().AutoRollRace do pcall(function() Remotes.RollRacePower:FireServer() end); task.wait(0.5) end end) end
+        end
+    })
+
+    local rowW6B = fGW6:Row()
+    rowW6B:Left():TitleStack({ Title = "Auto Roll Bankai Power" })
+    rowW6B:Right():Toggle({
+        Value = cfgBool("AutoRollBankai"),
+        ValueChanged = function(self, val)
+            getgenv().AutoRollBankai = val; SaveToggle("AutoRollBankai", val)
+            if val then task.spawn(function() while getgenv().AutoRollBankai do pcall(function() Remotes:WaitForChild("RollBankaiPower"):FireServer() end); task.wait(0.5) end end) end
+        end
+    })
+end
+
+-- TAB: EGG
+local tabEgg = secFarm:Tab({ Title = "Egg", Icon = cascade.Symbols.circle })
+do
+    local HardcodedStars = {
+        Star1 = CFrame.new(-127.026, 144.456, 2235.736, 1, 0, 0, 0, 1, 0, 0, 0, 1),
+        Star2 = CFrame.new(278.222, 157.859, 4988.032, -0.087, 0, -0.996, 0, 1, 0, 0.996, 0, -0.087),
+        Star3 = CFrame.new(-81.528, 135.014, 7572.576, -0.437, 0, -0.9, 0, 1, 0, 0.9, 0, -0.437),
+        Star4 = CFrame.new(19.552, 166.409, 10719.408, -0.996, 0, 0.087, 0, 1, 0, -0.087, 0, -0.996),
+        Star5 = CFrame.new(-41.351, 152.666, 14056.229, -0.087, 0, -0.996, 0, 1, 0, 0.996, 0, -0.087),
+        Star6 = CFrame.new(-235.462, 355.442, 16804.356, -0.996, 0, 0.087, 0, 1, 0, -0.087, 0, -0.996),
+    }
+
+    local EggCFrames, starValues = {}, {}
+    local function RebuildStarValues()
+        local seen = {}
+        starValues = {}
+        for i = 1, 6 do
+            local key = "Star"..i
+            if HardcodedStars[key] then
+                EggCFrames[key] = HardcodedStars[key]
+                table.insert(starValues, key)
+                seen[key] = true
+            end
+        end
+        if workspace:FindFirstChild("Stars") then
+            for index, star in ipairs(workspace.Stars:GetChildren()) do
+                local n = "Star"..index
+                if not seen[n] then
+                    local cf
+                    if star:IsA("Model") and star.PrimaryPart then cf = star.PrimaryPart.CFrame
+                    elseif star:IsA("BasePart") then cf = star.CFrame
+                    elseif star:FindFirstChild("HumanoidRootPart") then cf = star.HumanoidRootPart.CFrame
+                    elseif star:IsA("Model") then 
+                        local pt = star:FindFirstChildWhichIsA("BasePart")
+                        if pt then cf = pt.CFrame end 
+                    end
+                    if cf then 
+                        EggCFrames[n] = cf
+                        table.insert(starValues, n)
+                        seen[n] = true 
+                    end
+                end
+            end
+        end
+    end
+    RebuildStarValues()
+
+    local SelectedHatchStar = (Config.SelectedHatchStar and table.find(starValues, Config.SelectedHatchStar)) and Config.SelectedHatchStar or starValues[1]
+    local SelectedHatchAmount = Config.SelectedHatchAmount or "Auto"
+    local starPopup
+
+    local psSettings = tabEgg:PageSection({ Title = "Star Settings" })
+    local fSettings  = psSettings:Form()
+
+    local rowSt = fSettings:Row()
+    rowSt:Left():TitleStack({ Title = "Select Star", Subtitle = "Choose which star to hatch eggs from" })
+    starPopup = rowSt:Right():PopUpButton({ 
+        Options = starValues, 
+        Value = table.find(starValues, SelectedHatchStar) or 1,
+        ValueChanged = function(self, idx)
+            SelectedHatchStar = starValues[idx]
+            Config.SelectedHatchStar = SelectedHatchStar
+            SaveConfig()
+        end 
+    })
+
+    local rowRefStar = fSettings:Row()
+    rowRefStar:Left():TitleStack({ Title = "Refresh Stars" })
+    rowRefStar:Right():Button({ 
+        Label = "Refresh", 
+        Pushed = function()
+            RebuildStarValues()
+            if #starValues > 0 then 
+                starPopup.Options = starValues
+                starPopup.Value = 1
+                SelectedHatchStar = starValues[1] 
+            end
+        end 
+    })
+
+    local psAuto = tabEgg:PageSection({ Title = "Automation" })
+    local fAuto  = psAuto:Form()
+
+    local rowAE = fAuto:Row()
+    rowAE:Left():TitleStack({ Title = "Auto Hatch Eggs" })
+    local togAE = rowAE:Right():Toggle({
+        Value = cfgBool("AutoEgg"),
+        ValueChanged = function(self, val)
+            getgenv().AutoEgg = val; SaveToggle("AutoEgg", val)
+            if not val then return end
+            task.spawn(function()
+                local lastWorldUsed = nil
+                while getgenv().AutoEgg do
+                    pcall(function()
+                        local starId = string.match(SelectedHatchStar,"%d+") or "1"
+                        local currentWS = "World"..starId
+                        
+                        if lastWorldUsed ~= currentWS then
+                            lastWorldUsed = currentWS
+                        end
+                        SmartTeleport(currentWS, 4)
+
+                        local pc = LocalPlayer.Character
+                        if pc and pc:FindFirstChild("HumanoidRootPart") then
+                            local hrp = pc.HumanoidRootPart
+                            local cf = EggCFrames[SelectedHatchStar]
+                            if cf then 
+                                local tp = (cf * CFrame.new(0, 0, 4.5)).Position
+                                if (hrp.Position - tp).Magnitude > 3 then 
+                                    hrp.CFrame = CFrame.new(tp, tp + hrp.CFrame.LookVector) 
+                                end 
+                            end
+                        end
+                        
+                        local amt = 1
+                        if tostring(SelectedHatchAmount):lower() == "auto" then
+                            pcall(function()
+                                local lbl = PlayerGui.PetEgg.Egg.Buttons.R:FindFirstChild("ButtonName")
+                                if lbl then 
+                                    local n = string.match(lbl.Text,"%d+")
+                                    if n then amt = tonumber(n) end 
+                                end
+                            end)
+                        else 
+                            amt = tonumber(SelectedHatchAmount) or 1 
+                        end
+                        
+                        Remotes:WaitForChild("Eggs"):WaitForChild("Hatch"):InvokeServer(SelectedHatchStar, amt)
+                    end)
+                    task.wait(0.1)
+                end
+            end)
+        end,
+    })
+    ToggleRefs["AutoEgg"] = togAE
+end
+
+-- TAB: RAID
+local tabRaid = secFarm:Tab({ Title = "Raid", Icon = cascade.Symbols.shield })
+do
+    local LeaveAtWave = tonumber(Config.LeaveAtWave) or 20
+    local EasterLeaveAtWave = tonumber(Config.EasterLeaveAtWave) or 1000
+    
+    local RaidPaused  = false
+    local RaidSaved   = {}
+
+    local function GetWave()
+        local ok, r = pcall(function()
+            local lbl = PlayerGui.Main.HUD.Dungeon.RaidsInfo.WavesFrame.Wave
+            local ct = lbl:FindFirstChild("ContentText") or lbl
+            return tonumber(string.match(ct.Text or ct.ContentText, "(%d+)%s*/"))
+        end)
+        return ok and r or nil
+    end
+    
+    local function InDungeon()
+        local ok, r = pcall(function() return PlayerGui.Main.HUD.Dungeon.Visible end)
+        return ok and r
+    end
+
+    local function InEaster()
+        local er = workspace:FindFirstChild("EasterRaid")
+        local pc = LocalPlayer.Character
+        local hrp = pc and pc:FindFirstChild("HumanoidRootPart")
+        if er and hrp then
+            local refPart = er:FindFirstChildWhichIsA("BasePart", true)
+            if refPart then
+                if (hrp.Position - refPart.Position).Magnitude < 5000 then
+                    return true
+                end
+            end
+        end
+        return false
+    end
+
+    local function isAliveFast(targetPart)
+        if not targetPart or not targetPart.Parent then return false end
+        local m = targetPart:FindFirstAncestorOfClass("Model")
+        if not m then return false end
+        local h = m:FindFirstChildOfClass("Humanoid")
+        return h and h.Health > 0
+    end
+
+    local function FindAggressiveEnemy(folder, maxDist)
+        local pc = LocalPlayer.Character
+        local hrp = pc and pc:FindFirstChild("HumanoidRootPart")
+        if not hrp then return nil end
+        
+        local best, bd = nil, maxDist or 50000
+        if not folder then return nil end
+
+        for _, obj in ipairs(folder:GetDescendants()) do
+            if obj:IsA("Model") and obj ~= pc then
+                local hum = obj:FindFirstChildOfClass("Humanoid")
+                if hum and hum.Health > 0 then
+                    local targetPart = obj:FindFirstChild("HumanoidRootPart") or obj.PrimaryPart
+                    if targetPart then
+                        local d = (hrp.Position - targetPart.Position).Magnitude
+                        if d < bd then
+                            bd = d
+                            best = targetPart
+                        end
+                    end
+                end
+            end
+        end
+        return best
+    end
+
+    local function ExitDungeon()
+        pcall(function() Remotes:WaitForChild("LeaveRaid"):FireServer() end)
+    end
+    
+    local function PauseFarms()
+        if RaidPaused then return end; RaidPaused = true
+        RaidSaved = {AutoTeleport = getgenv().AutoTeleport, AutoWorldQuest = getgenv().AutoWorldQuest, AutoEgg = getgenv().AutoEgg}
+        for k, _ in pairs(RaidSaved) do 
+            if getgenv()[k] then 
+                getgenv()[k] = false; pcall(function() ToggleRefs[k].Value = false end) 
+            end 
+        end
+    end
+    
+    local function ResumeFarms()
+        if not RaidPaused then return end; RaidPaused = false
+        task.wait(2)
+        for k, was in pairs(RaidSaved) do if was then pcall(function() ToggleRefs[k].Value = true end) end end
+    end
+
+    local function ClickUI(button)
+        pcall(function()
+            if getconnections then
+                for _, conn in pairs(getconnections(button.MouseButton1Click)) do conn:Fire() end
+                for _, conn in pairs(getconnections(button.Activated)) do conn:Fire() end
+            end
+            GuiService.SelectedObject = button
+            task.wait(0.1)
+            VIM:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+            task.wait(0.1)
+            VIM:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
+            GuiService.SelectedObject = nil
+        end)
+    end
+
+    -- DUNGEON TOWER
+    local psTower = tabRaid:PageSection({ Title = "Tower" })
+    local fTower  = psTower:Form()
+    local waveOpts = {}; for i = 1, 100 do table.insert(waveOpts, tostring(i)) end
+
+    local rowLW = fTower:Row()
+    rowLW:Left():TitleStack({ Title = "Leave At Wave" })
+    rowLW:Right():PopUpButton({ 
+        Options = waveOpts, 
+        Value = table.find(waveOpts, tostring(LeaveAtWave)) or 20,
+        ValueChanged = function(self, idx)
+            LeaveAtWave = tonumber(waveOpts[idx])
+            Config.LeaveAtWave = LeaveAtWave
+            SaveConfig()
+        end 
+    })
+
+    local rowTCTP = fTower:Row()
+    rowTCTP:Left():TitleStack({ Title = "Stand at Center" })
+    rowTCTP:Right():Toggle({
+        Value = cfgBool("TowerCenterTP"),
+        ValueChanged = function(self, val)
+            getgenv().TowerCenterTP = val; SaveToggle("TowerCenterTP", val)
+        end
+    })
+    
+    local rowTR = fTower:Row()
+    rowTR:Left():TitleStack({ Title = "Auto Easy Tower" })
+    local togTower = rowTR:Right():Toggle({
+        Value = cfgBool("AutoTower"),
+        ValueChanged = function(self, val)
+            getgenv().AutoTower = val; SaveToggle("AutoTower", val)
+            if not val then return end
+            task.spawn(function()
+                local currentTarget = nil
+                local _wasInDungeon = false
+                while getgenv().AutoTower do
+                    pcall(function()
+                        if not InDungeon() then
+                            currentTarget = nil
+                            if _wasInDungeon then
+                                _wasInDungeon = false
+                                ResumeFarms()
+                            end
+
+                            local currentMin = tonumber(os.date("%M"))
+                            local currentSec = tonumber(os.date("%S"))
+
+                            if currentMin == 28 or currentMin == 58 then
+                                SmartTeleport("DungeonHub", 5)
+                            end
+
+                            local joinWindow = (currentMin >= 0 and currentMin <= 3) or (currentMin >= 30 and currentMin <= 33)
+                            if joinWindow and not InDungeon() then
+                                pcall(function()
+                                    local towerUI = PlayerGui:FindFirstChild("Tower")
+                                    if towerUI and towerUI:FindFirstChild("JoinTower") then
+                                        local joinTowerFrame = towerUI.JoinTower
+                                        if joinTowerFrame.Visible == true then
+                                            local sureBtn = joinTowerFrame:FindFirstChild("Options") and joinTowerFrame.Options:FindFirstChild("SureButton")
+                                            if sureBtn then
+                                                ClickUI(sureBtn)
+                                                task.wait(10)
+                                            end
+                                        end
+                                    end
+                                end)
+                            end
+                        else
+                            _wasInDungeon = true
+                            
+                            local inTower = false
+                            local towerFolder = workspace:FindFirstChild("TowerRaid")
+                            if towerFolder and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                                local refPart = towerFolder:FindFirstChildWhichIsA("BasePart", true)
+                                if refPart and (LocalPlayer.Character.HumanoidRootPart.Position - refPart.Position).Magnitude < 5000 then
+                                    inTower = true
+                                end
+                            end
+
+                            if inTower then
+                                PauseFarms()
+                                local wave = GetWave()
+                                if wave and wave >= LeaveAtWave then 
+                                    currentTarget = nil
+                                    ExitDungeon()
+                                    task.wait(5)
+                                    ResumeFarms()
+                                else
+                                    if not currentTarget then
+                                        local raid1 = towerFolder and towerFolder:FindFirstChild("Raid1")
+                                        local enemyFolder = raid1 and raid1:FindFirstChild("Enemy")
+                                        
+                                        if enemyFolder then
+                                            local pc = LocalPlayer.Character
+                                            local hrp = pc and pc:FindFirstChild("HumanoidRootPart")
+                                            local best, bd = nil, math.huge
+                                            for _, obj in ipairs(enemyFolder:GetChildren()) do
+                                                if obj:IsA("Model") then
+                                                    local hpRaw = obj:GetAttribute("CurrentHP")
+                                                    local realHP = 0
+                                                    if hpRaw then
+                                                        local _, hp = string.match(tostring(hpRaw), "(%d+);(%d+%.?%d*)")
+                                                        realHP = tonumber(hp) or 0
+                                                    end
+                                                    
+                                                    if realHP > 0 then
+                                                        local tp = obj:FindFirstChild("HumanoidRootPart") or obj.PrimaryPart
+                                                        if tp and hrp then
+                                                            local d = (hrp.Position - tp.Position).Magnitude
+                                                            if d < bd then bd = d; best = tp end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                            if best then currentTarget = best end
+                                        end
+                                    end
+
+                                    if currentTarget or getgenv().TowerCenterTP then
+                                        local pc  = LocalPlayer.Character
+                                        local hrp = pc and pc:FindFirstChild("HumanoidRootPart")
+                                        if hrp then
+                                            if getgenv().TowerCenterTP then
+                                                local centerCF  = CFrame.new(969.513428, 440.249756, -655.444519, 0.232362, -0.000000, -0.972629, 0.000000, 1.000000, -0.000000, 0.972629, -0.000000, 0.232362)
+                                                local centerPos = centerCF.Position
+                                                local dist2D    = (Vector3.new(hrp.Position.X, 0, hrp.Position.Z) - Vector3.new(centerPos.X, 0, centerPos.Z)).Magnitude
+                                                if dist2D > 5 then
+                                                    hrp.AssemblyLinearVelocity  = Vector3.zero
+                                                    hrp.AssemblyAngularVelocity = Vector3.zero
+                                                    hrp.CFrame = centerCF
+                                                end
+                                            elseif currentTarget then
+                                                local model  = currentTarget:FindFirstAncestorOfClass("Model")
+                                                local hpRaw  = model and model:GetAttribute("CurrentHP")
+                                                local realHP = 0
+                                                if hpRaw then
+                                                    local _, hp = string.match(tostring(hpRaw), "(%d+);(%d+%.?%d*)")
+                                                    realHP = tonumber(hp) or 0
+                                                end
+                                                if realHP <= 0 then
+                                                    currentTarget = nil
+                                                else
+                                                    hrp.AssemblyLinearVelocity  = Vector3.zero
+                                                    hrp.AssemblyAngularVelocity = Vector3.zero
+                                                    local tpPos = currentTarget.Position + Vector3.new(0, 5, 0)
+                                                    if (hrp.Position - currentTarget.Position).Magnitude > 8 then
+                                                        hrp.CFrame = CFrame.new(tpPos, currentTarget.Position)
+                                                    end
+                                                end
+                                            end
+                                            pcall(function() Remotes:WaitForChild("Clicked"):FireServer() end)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end)
+                    if not currentTarget then task.wait(0.1) else task.wait() end
+                end
+                ResumeFarms()
+            end)
+        end,
+    })
+    ToggleRefs["AutoTower"] = togTower
+
+    -- EASTER EVENT RAID
+    local psEaster = tabRaid:PageSection({ Title = "Easter Event Raid" })
+    local fEaster  = psEaster:Form()
+
+    local rowEWave = fEaster:Row()
+    rowEWave:Left():TitleStack({ Title = "Leave At Wave" })
+    rowEWave:Right():TextField({ 
+        Value = tostring(EasterLeaveAtWave), 
+        TextChanged = function(self, val)
+            local num = tonumber(val)
+            if num then
+                EasterLeaveAtWave = num
+                Config.EasterLeaveAtWave = num
+                SaveConfig()
+            end
+        end 
+    })
+
+    local rowECTP = fEaster:Row()
+    rowECTP:Left():TitleStack({ Title = "Stand at Center" })
+    rowECTP:Right():Toggle({
+        Value = cfgBool("EasterCenterTP"),
+        ValueChanged = function(self, val)
+            getgenv().EasterCenterTP = val; SaveToggle("EasterCenterTP", val)
+        end
+    })
+
+    local rowER = fEaster:Row()
+    rowER:Left():TitleStack({ Title = "Auto Easter Event Raid" })
+    local togEaster = rowER:Right():Toggle({
+        Value = cfgBool("AutoEasterRaid"),
+        ValueChanged = function(self, val)
+            getgenv().AutoEasterRaid = val; SaveToggle("AutoEasterRaid", val)
+            if not val then return end
+            task.spawn(function()
+                local currentTarget = nil
+                local targetDiedConn = nil
+
+                local function SetEasterTarget(part)
+                    if targetDiedConn then
+                        pcall(function() targetDiedConn:Disconnect() end)
+                        targetDiedConn = nil
+                    end
+                    currentTarget = part
+                    if part then
+                        local model = part:FindFirstAncestorOfClass("Model")
+                        if model then
+                            targetDiedConn = model:GetAttributeChangedSignal("CurrentHP"):Connect(function()
+                                local hpRaw = model:GetAttribute("CurrentHP")
+                                local realHP = 0
+                                if hpRaw then
+                                    local _, hp = string.match(tostring(hpRaw), "(%d+);(%d+%.?%d*)")
+                                    realHP = tonumber(hp) or 0
+                                end
+                                if realHP <= 0 then
+                                    currentTarget = nil
+                                    if targetDiedConn then pcall(function() targetDiedConn:Disconnect() end); targetDiedConn = nil end
+                                end
+                            end)
+                        end
+                    end
+                end
+
+                local _easterJoinPending = false
+                local _easterJoinTime    = 0
+                while getgenv().AutoEasterRaid do
+                    pcall(function()
+                        local inRaid = false
+                        local er = nil
+                        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        
+                        if hrp then
+                            local minDist = math.huge
+                            for _, obj in ipairs(workspace:GetChildren()) do
+                                if obj.Name == "EasterRaid" then
+                                    local ref = obj:FindFirstChildWhichIsA("BasePart", true)
+                                    if ref then
+                                        local d = (hrp.Position - ref.Position).Magnitude
+                                        if d < 5000 and d < minDist then
+                                            minDist = d
+                                            er = obj
+                                        end
+                                    end
+                                end
+                            end
+                        end
+
+                        if er and hrp then
+                            inRaid = true
+                            _easterJoinPending = false
+                        end
+
+                        if not inRaid then
+                            SetEasterTarget(nil)
+                            ResumeFarms()
+
+                            local now = tick()
+                            if not _easterJoinPending or (now - _easterJoinTime) > 15 then
+                                _easterJoinPending = true
+                                _easterJoinTime    = now
+
+                                SmartTeleport("World1", 5)
+
+                                pcall(function()
+                                    local easterUI = PlayerGui.Main.Frames:FindFirstChild("EasterRaid")
+                                    if easterUI then easterUI:SetAttribute("Open", true) end
+                                    Remotes:WaitForChild("OpenEasterRaid"):FireServer()
+                                end)
+                            end
+
+                            task.wait(5)
+                        else
+                            PauseFarms()
+                            
+                            local wave = GetWave()
+                            if er and wave and wave >= EasterLeaveAtWave then 
+                                currentTarget = nil; ExitDungeon(); task.wait(5); ResumeFarms()
+                                return
+                            end
+                            
+                            if not currentTarget then
+                                local raid1 = er:FindFirstChild("Raid1")
+                                local enemyFolder = raid1 and raid1:FindFirstChild("Enemy")
+                                if enemyFolder then
+                                    local pc = LocalPlayer.Character
+                                    local hrpPart = pc and pc:FindFirstChild("HumanoidRootPart")
+                                    local best, bd = nil, math.huge
+                                    for _, obj in ipairs(enemyFolder:GetChildren()) do
+                                        if obj:IsA("Model") then
+                                            local hpRaw = obj:GetAttribute("CurrentHP")
+                                            local realHP = 0
+                                            if hpRaw then
+                                                local _, hp = string.match(tostring(hpRaw), "(%d+);(%d+%.?%d*)")
+                                                realHP = tonumber(hp) or 0
+                                            end
+                                            if realHP > 0 then
+                                                local tp = obj:FindFirstChild("HumanoidRootPart") or obj.PrimaryPart
+                                                if tp and hrpPart then
+                                                    local d = (hrpPart.Position - tp.Position).Magnitude
+                                                    if d < bd then bd = d; best = tp end
+                                                end
+                                            end
+                                        end
+                                    end
+                                    if best then SetEasterTarget(best) end
+                                end
+                            end
+
+                            if currentTarget or getgenv().EasterCenterTP then
+                                local hrpPart = LocalPlayer.Character.HumanoidRootPart
+                                
+                                if getgenv().EasterCenterTP then
+                                    local centerPos = Vector3.new(-219.613, 543.115, -3275.389)
+                                    local dist2D = (Vector3.new(hrpPart.Position.X, 0, hrpPart.Position.Z) - Vector3.new(centerPos.X, 0, centerPos.Z)).Magnitude
+                                    
+                                    if dist2D > 5 then
+                                        hrpPart.AssemblyLinearVelocity = Vector3.zero
+                                        hrpPart.AssemblyAngularVelocity = Vector3.zero
+                                        hrpPart.CFrame = CFrame.new(centerPos + Vector3.new(0, 5, 0))
+                                    end
+                                elseif currentTarget then
+                                    local tpPos = currentTarget.Position + Vector3.new(0, 6, 0)
+                                    if (hrpPart.Position - currentTarget.Position).Magnitude > 8 then
+                                        hrpPart.AssemblyLinearVelocity = Vector3.zero
+                                        hrpPart.AssemblyAngularVelocity = Vector3.zero
+                                        hrpPart.CFrame = CFrame.new(tpPos, currentTarget.Position)
+                                    end
+                                end
+                                
+                                Remotes:WaitForChild("Clicked"):FireServer()
+                            end
+                        end
+                    end)
+                    if not currentTarget then task.wait(0.1) else task.wait() end
+                end
+                ResumeFarms()
+            end)
+        end,
+    })
+    ToggleRefs["AutoEasterRaid"] = togEaster
+
+    -- WISTERIA RAID
+    local psWisteria = tabRaid:PageSection({ Title = "Wisteria Raid" })
+    local fWisteria  = psWisteria:Form()
+    local WisteriaLeaveAtWave = tonumber(Config.WisteriaLeaveAtWave) or 1000
+
+    local rowWWave = fWisteria:Row()
+    rowWWave:Left():TitleStack({ Title = "Leave At Wave" })
+    rowWWave:Right():TextField({
+        Value = tostring(WisteriaLeaveAtWave),
+        TextChanged = function(self, val)
+            local num = tonumber(val)
+            if num then
+                WisteriaLeaveAtWave = num
+                Config.WisteriaLeaveAtWave = num
+                SaveConfig()
+            end
+        end
+    })
+
+    local rowWCTP = fWisteria:Row()
+    rowWCTP:Left():TitleStack({ Title = "Stand at Center" })
+    rowWCTP:Right():Toggle({
+        Value = cfgBool("WisteriaCenterTP"),
+        ValueChanged = function(self, val)
+            getgenv().WisteriaCenterTP = val; SaveToggle("WisteriaCenterTP", val)
+        end
+    })
+
+    local rowWR = fWisteria:Row()
+    rowWR:Left():TitleStack({ Title = "Auto WisteriaRaid" })
+    local togWisteria = rowWR:Right():Toggle({
+        Value = cfgBool("AutoWisteriaRaid"),
+        ValueChanged = function(self, val)
+            getgenv().AutoWisteriaRaid = val; SaveToggle("AutoWisteriaRaid", val)
+            if not val then return end
+            task.spawn(function()
+                local currentTarget = nil
+                local targetDiedConn = nil
+
+                local function SetWisteriaTarget(part)
+                    if targetDiedConn then
+                        pcall(function() targetDiedConn:Disconnect() end)
+                        targetDiedConn = nil
+                    end
+                    currentTarget = part
+                    if part then
+                        local model = part:FindFirstAncestorOfClass("Model")
+                        if model then
+                            targetDiedConn = model:GetAttributeChangedSignal("CurrentHP"):Connect(function()
+                                local hpRaw = model:GetAttribute("CurrentHP")
+                                local realHP = 0
+                                if hpRaw then
+                                    local _, hp = string.match(tostring(hpRaw), "(%d+);(%d+%.?%d*)")
+                                    realHP = tonumber(hp) or 0
+                                end
+                                if realHP <= 0 then
+                                    currentTarget = nil
+                                    if targetDiedConn then pcall(function() targetDiedConn:Disconnect() end); targetDiedConn = nil end
+                                end
+                            end)
+                        end
+                    end
+                end
+
+                local _wisteriaJoinPending = false
+                local _wisteriaJoinTime    = 0
+                while getgenv().AutoWisteriaRaid do
+                    pcall(function()
+                        local inRaid = false
+                        local wr = nil
+                        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        
+                        if hrp then
+                            local minDist = math.huge
+                            for _, obj in ipairs(workspace:GetChildren()) do
+                                if obj.Name == "WisteriaRaid" then
+                                    local ref = obj:FindFirstChildWhichIsA("BasePart", true)
+                                    if ref then
+                                        local d = (hrp.Position - ref.Position).Magnitude
+                                        if d < 5000 and d < minDist then
+                                            minDist = d
+                                            wr = obj
+                                        end
+                                    end
+                                end
+                            end
+                        end
+
+                        if wr and hrp then
+                            inRaid = true
+                            _wisteriaJoinPending = false
+                        end
+
+                        if not inRaid then
+                            SetWisteriaTarget(nil)
+                            ResumeFarms()
+
+                            local now = tick()
+                            if not _wisteriaJoinPending or (now - _wisteriaJoinTime) > 15 then
+                                _wisteriaJoinPending = true
+                                _wisteriaJoinTime    = now
+
+                                SmartTeleport("World4", 5)
+
+                                pcall(function()
+                                    local wisteriaUI = PlayerGui.Main.Frames:FindFirstChild("WisteriaRaid")
+                                    if wisteriaUI then wisteriaUI:SetAttribute("Open", true) end
+                                    Remotes:WaitForChild("OpenWisteriaRaid"):FireServer()
+                                end)
+                            end
+
+                            task.wait(5)
+                        else
+                            PauseFarms()
+
+                            local wave = GetWave()
+                            if wr and wave and wave >= WisteriaLeaveAtWave then
+                                currentTarget = nil; ExitDungeon(); task.wait(5); ResumeFarms()
+                                return
+                            end
+
+                            if not currentTarget then
+                                local raid1 = wr:FindFirstChild("Raid1")
+                                local enemyFolder = raid1 and raid1:FindFirstChild("Enemy")
+                                if enemyFolder then
+                                    local pc = LocalPlayer.Character
+                                    local hrpPart = pc and pc:FindFirstChild("HumanoidRootPart")
+                                    local best, bd = nil, math.huge
+                                    for _, obj in ipairs(enemyFolder:GetChildren()) do
+                                        if obj:IsA("Model") then
+                                            local hpRaw = obj:GetAttribute("CurrentHP")
+                                            local realHP = 0
+                                            if hpRaw then
+                                                local _, hp = string.match(tostring(hpRaw), "(%d+);(%d+%.?%d*)")
+                                                realHP = tonumber(hp) or 0
+                                            end
+                                            if realHP > 0 then
+                                                local tp = obj:FindFirstChild("HumanoidRootPart") or obj.PrimaryPart
+                                                if tp and hrpPart then
+                                                    local d = (hrpPart.Position - tp.Position).Magnitude
+                                                    if d < bd then bd = d; best = tp end
+                                                end
+                                            end
+                                        end
+                                    end
+                                    if best then SetWisteriaTarget(best) end
+                                end
+                            end
+
+                            if currentTarget or getgenv().WisteriaCenterTP then
+                                local hrpPart = LocalPlayer.Character.HumanoidRootPart
+
+                                if getgenv().WisteriaCenterTP then
+                                    local centerPos = Vector3.new(-218.195, 543.989, -1128.732)
+                                    local dist2D = (Vector3.new(hrpPart.Position.X, 0, hrpPart.Position.Z) - Vector3.new(centerPos.X, 0, centerPos.Z)).Magnitude
+                                    
+                                    if dist2D > 5 then
+                                        hrpPart.AssemblyLinearVelocity = Vector3.zero
+                                        hrpPart.AssemblyAngularVelocity = Vector3.zero
+                                        hrpPart.CFrame = CFrame.new(centerPos + Vector3.new(0, 5, 0))
+                                    end
+                                elseif currentTarget then
+                                    local tpPos = currentTarget.Position + Vector3.new(0, 6, 0)
+                                    if (hrpPart.Position - currentTarget.Position).Magnitude > 8 then
+                                        hrpPart.AssemblyLinearVelocity = Vector3.zero
+                                        hrpPart.AssemblyAngularVelocity = Vector3.zero
+                                        hrpPart.CFrame = CFrame.new(tpPos, currentTarget.Position)
+                                    end
+                                end
+                                
+                                Remotes:WaitForChild("Clicked"):FireServer()
+                            end
+                        end
+                    end)
+                    if not currentTarget then task.wait(0.1) else task.wait() end
+                end
+                ResumeFarms()
+            end)
+        end,
+    })
+    ToggleRefs["AutoWisteriaRaid"] = togWisteria
+
+    -- WANDENREICH RAID
+    local psWandenreich = tabRaid:PageSection({ Title = "Wandenreich Raid" })
+    local fWandenreich  = psWandenreich:Form()
+    local WandenreichLeaveAtWave = tonumber(Config.WandenreichLeaveAtWave) or 1000
+
+    local rowWandWave = fWandenreich:Row()
+    rowWandWave:Left():TitleStack({ Title = "Leave At Wave" })
+    rowWandWave:Right():TextField({
+        Value = tostring(WandenreichLeaveAtWave),
+        TextChanged = function(self, val)
+            local num = tonumber(val)
+            if num then
+                WandenreichLeaveAtWave = num
+                Config.WandenreichLeaveAtWave = num
+                SaveConfig()
+            end
+        end
+    })
+
+    local rowWandCTP = fWandenreich:Row()
+    rowWandCTP:Left():TitleStack({ Title = "Stand at Center" })
+    rowWandCTP:Right():Toggle({
+        Value = cfgBool("WandenreichCenterTP"),
+        ValueChanged = function(self, val)
+            getgenv().WandenreichCenterTP = val; SaveToggle("WandenreichCenterTP", val)
+        end
+    })
+
+    local rowWandR = fWandenreich:Row()
+    rowWandR:Left():TitleStack({ Title = "Auto Wandenreich Raid" })
+    local togWandenreich = rowWandR:Right():Toggle({
+        Value = cfgBool("AutoWandenreichRaid"),
+        ValueChanged = function(self, val)
+            getgenv().AutoWandenreichRaid = val; SaveToggle("AutoWandenreichRaid", val)
+            if not val then return end
+            task.spawn(function()
+                local currentTarget = nil
+                local targetDiedConn = nil
+
+                local function SetWandenreichTarget(part)
+                    if targetDiedConn then
+                        pcall(function() targetDiedConn:Disconnect() end)
+                        targetDiedConn = nil
+                    end
+                    currentTarget = part
+                    if part then
+                        local model = part:FindFirstAncestorOfClass("Model")
+                        if model then
+                            targetDiedConn = model:GetAttributeChangedSignal("CurrentHP"):Connect(function()
+                                local hpRaw = model:GetAttribute("CurrentHP")
+                                local realHP = 0
+                                if hpRaw then
+                                    local _, hp = string.match(tostring(hpRaw), "(%d+);(%d+%.?%d*)")
+                                    realHP = tonumber(hp) or 0
+                                end
+                                if realHP <= 0 then
+                                    currentTarget = nil
+                                    if targetDiedConn then pcall(function() targetDiedConn:Disconnect() end); targetDiedConn = nil end
+                                end
+                            end)
+                        end
+                    end
+                end
+
+                local _wandenreichJoinPending = false
+                local _wandenreichJoinTime    = 0
+                while getgenv().AutoWandenreichRaid do
+                    pcall(function()
+                        local inRaid = false
+                        local wandRaid = nil
+                        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        
+                        if hrp then
+                            local minDist = math.huge
+                            for _, obj in ipairs(workspace:GetChildren()) do
+                                if obj.Name == "WandenreichRaid" then
+                                    local ref = obj:FindFirstChildWhichIsA("BasePart", true)
+                                    if ref then
+                                        local d = (hrp.Position - ref.Position).Magnitude
+                                        if d < 5000 and d < minDist then
+                                            minDist = d
+                                            wandRaid = obj
+                                        end
+                                    end
+                                end
+                            end
+                        end
+
+                        if wandRaid and hrp then
+                            inRaid = true
+                            _wandenreichJoinPending = false
+                        end
+
+                        if not inRaid then
+                            SetWandenreichTarget(nil)
+                            ResumeFarms()
+
+                            local now = tick()
+                            if not _wandenreichJoinPending or (now - _wandenreichJoinTime) > 15 then
+                                _wandenreichJoinPending = true
+                                _wandenreichJoinTime    = now
+
+                                SmartTeleport("World6", 5)
+
+                                pcall(function()
+                                    local wandUI = PlayerGui.Main.Frames:FindFirstChild("WandenreichRaid")
+                                    if wandUI then wandUI:SetAttribute("Open", true) end
+                                    Remotes:WaitForChild("OpenWandenreichRaid"):FireServer()
+                                end)
+                            end
+
+                            task.wait(5)
+                        else
+                            PauseFarms()
+
+                            local wave = GetWave()
+                            if wandRaid and wave and wave >= WandenreichLeaveAtWave then
+                                currentTarget = nil; ExitDungeon(); task.wait(5); ResumeFarms()
+                                return
+                            end
+
+                            if not currentTarget then
+                                local raid1 = wandRaid:FindFirstChild("Raid1")
+                                local enemyFolder = raid1 and raid1:FindFirstChild("Enemy")
+                                if enemyFolder then
+                                    local pc = LocalPlayer.Character
+                                    local hrpPart = pc and pc:FindFirstChild("HumanoidRootPart")
+                                    local best, bd = nil, math.huge
+                                    for _, obj in ipairs(enemyFolder:GetChildren()) do
+                                        if obj:IsA("Model") then
+                                            local hpRaw = obj:GetAttribute("CurrentHP")
+                                            local realHP = 0
+                                            if hpRaw then
+                                                local _, hp = string.match(tostring(hpRaw), "(%d+);(%d+%.?%d*)")
+                                                realHP = tonumber(hp) or 0
+                                            end
+                                            if realHP > 0 then
+                                                local tp = obj:FindFirstChild("HumanoidRootPart") or obj.PrimaryPart
+                                                if tp and hrpPart then
+                                                    local d = (hrpPart.Position - tp.Position).Magnitude
+                                                    if d < bd then bd = d; best = tp end
+                                                end
+                                            end
+                                        end
+                                    end
+                                    if best then SetWandenreichTarget(best) end
+                                end
+                            end
+
+                            if currentTarget or getgenv().WandenreichCenterTP then
+                                local hrpPart = LocalPlayer.Character.HumanoidRootPart
+
+                                if getgenv().WandenreichCenterTP then
+                                    -- Target CFrame Center for Wandenreich
+                                    local centerCF = CFrame.new(-278.276581, 931.802307, -5582.229, 0.707134247, 0, -0.707079291, 0, 1, 0, 0.707079291, 0, 0.707134247)
+                                    local centerPos = centerCF.Position
+                                    local dist2D = (Vector3.new(hrpPart.Position.X, 0, hrpPart.Position.Z) - Vector3.new(centerPos.X, 0, centerPos.Z)).Magnitude
+                                    
+                                    if dist2D > 5 then
+                                        hrpPart.AssemblyLinearVelocity = Vector3.zero
+                                        hrpPart.AssemblyAngularVelocity = Vector3.zero
+                                        hrpPart.CFrame = centerCF
+                                    end
+                                elseif currentTarget then
+                                    local tpPos = currentTarget.Position + Vector3.new(0, 6, 0)
+                                    if (hrpPart.Position - currentTarget.Position).Magnitude > 8 then
+                                        hrpPart.AssemblyLinearVelocity = Vector3.zero
+                                        hrpPart.AssemblyAngularVelocity = Vector3.zero
+                                        hrpPart.CFrame = CFrame.new(tpPos, currentTarget.Position)
+                                    end
+                                end
+                                
+                                Remotes:WaitForChild("Clicked"):FireServer()
+                            end
+                        end
+                    end)
+                    if not currentTarget then task.wait(0.1) else task.wait() end
+                end
+                ResumeFarms()
+            end)
+        end,
+    })
+    ToggleRefs["AutoWandenreichRaid"] = togWandenreich
+end
+
+-- TAB: UPGRADE
+local tabUpgrade = secPlayer:Tab({ Title = "Upgrade", Icon = cascade.Symbols.arrowUp })
+do
+    local psUpEvent = tabUpgrade:PageSection({ Title = "Event Upgrades" })
+    local fUpEvent  = psUpEvent:Form()
+
+    local rowEasterBasket = fUpEvent:Row()
+    rowEasterBasket:Left():TitleStack({ Title = "Auto Upgrade Easter Basket" })
+    rowEasterBasket:Right():Toggle({
+        Value = cfgBool("AutoEasterBasket"),
+        ValueChanged = function(self, val)
+            getgenv().AutoEasterBasket = val; SaveToggle("AutoEasterBasket", val)
+            if val then task.spawn(function() while getgenv().AutoEasterBasket do pcall(function() Remotes.EasterBasketLeveling:FireServer() end); task.wait(1) end end) end
+        end
+    })
+
+    local psUpW1 = tabUpgrade:PageSection({ Title = "World 2" })
+    local fUpW1  = psUpW1:Form()
+
+    local rowHaki = fUpW1:Row()
+    rowHaki:Left():TitleStack({ Title = "Auto Upgrade Haki" })
+    rowHaki:Right():Toggle({
+        Value = cfgBool("AutoUpgradeHaki"),
+        ValueChanged = function(self, val)
+            getgenv().AutoUpgradeHaki = val; SaveToggle("AutoUpgradeHaki", val)
+            if val then task.spawn(function() while getgenv().AutoUpgradeHaki do pcall(function() Remotes.HakiLeveling:FireServer() end); task.wait(1) end end) end
+        end
+    })
+
+    local rowAtk = fUpW1:Row()
+    rowAtk:Left():TitleStack({ Title = "Auto Upgrade Attack Range" })
+    rowAtk:Right():Toggle({
+        Value = cfgBool("AutoUpgradeAttackRange"),
+        ValueChanged = function(self, val)
+            getgenv().AutoUpgradeAttackRange = val; SaveToggle("AutoUpgradeAttackRange", val)
+            if val then task.spawn(function() while getgenv().AutoUpgradeAttackRange do pcall(function() Remotes.UpdateAttackRange:FireServer() end); task.wait(1) end end) end
+        end
+    })
+
+    local psUpW3 = tabUpgrade:PageSection({ Title = "World 3" })
+    local fUpW3  = psUpW3:Form()
+
+    local labMapping = {
+        ["Energy"]    = "Energy", ["Damage"]    = "Damage", ["GachaRoll"] = "GachaRoll",
+        ["Luck"]      = "Luck",   ["PetEquip"]  = "PetEquip", ["StarOpen"]  = "StarOpen",
+    }
+    
+    local LabOptions = {"Energy", "Damage", "GachaRoll", "Luck", "PetEquip", "StarOpen", }
+    local SelectedLabWithEmoji = Config.SelectedLabWithEmoji or "Energy"
+
+    local rowLabSel = fUpW3:Row()
+    rowLabSel:Left():TitleStack({ Title = "Select Upgrade" })
+    rowLabSel:Right():PopUpButton({ 
+        Options = LabOptions, 
+        Value = table.find(LabOptions, SelectedLabWithEmoji) or 1,
+        ValueChanged = function(self, idx)
+            SelectedLabWithEmoji = LabOptions[idx]
+            Config.SelectedLabWithEmoji = SelectedLabWithEmoji; SaveConfig()
+        end 
+    })
+
+    local rowLabUp = fUpW3:Row()
+    rowLabUp:Left():TitleStack({ Title = "Auto Upgrade" })
+    rowLabUp:Right():Toggle({
+        Value = cfgBool("AutoLaboratory"),
+        ValueChanged = function(self, val)
+            getgenv().AutoLaboratory = val; SaveToggle("AutoLaboratory", val)
+            if val then task.spawn(function()
+                while getgenv().AutoLaboratory do
+                    pcall(function()
+                        local realStatName = labMapping[SelectedLabWithEmoji]
+                        if realStatName == "All (Loop)" then
+                            for i = 1, 6 do
+                                if not getgenv().AutoLaboratory then break end
+                                Remotes.LaboratoryUpgrade:FireServer(labMapping[LabOptions[i]])
+                                task.wait(0.2) 
+                            end
+                        else
+                            Remotes.LaboratoryUpgrade:FireServer(realStatName)
+                        end
+                    end)
+                    task.wait(1)
+                end
+            end) end
+        end
+    })
+
+    local psUpW4 = tabUpgrade:PageSection({ Title = "World 4" })
+    local fUpW4  = psUpW4:Form()
+
+    local rowWisteria = fUpW4:Row()
+    rowWisteria:Left():TitleStack({ Title = "Auto Upgrade Wisteria" })
+    rowWisteria:Right():Toggle({
+        Value = cfgBool("AutoWisteria"),
+        ValueChanged = function(self, val)
+            getgenv().AutoWisteria = val; SaveToggle("AutoWisteria", val)
+            if val then task.spawn(function() while getgenv().AutoWisteria do pcall(function() Remotes.WisteriaLeveling:FireServer() end); task.wait(1) end end) end
+        end
+    })
+
+    local rowBloodArt = fUpW4:Row()
+    rowBloodArt:Left():TitleStack({ Title = "Auto Upgrade Blood Art" })
+    rowBloodArt:Right():Toggle({
+        Value = cfgBool("AutoBloodArt"),
+        ValueChanged = function(self, val)
+            getgenv().AutoBloodArt = val; SaveToggle("AutoBloodArt", val)
+            if val then task.spawn(function() while getgenv().AutoBloodArt do pcall(function() Remotes.BloodArtLeveling:FireServer() end); task.wait(1) end end) end
+        end
+    })
+
+    local psUpW5 = tabUpgrade:PageSection({ Title = "World 5" })
+    local fUpW5  = psUpW5:Form()
+
+    local rowKagune = fUpW5:Row()
+    rowKagune:Left():TitleStack({ Title = "Auto Upgrade Kagune" })
+    rowKagune:Right():Toggle({
+        Value = cfgBool("AutoKagune"),
+        ValueChanged = function(self, val)
+            getgenv().AutoKagune = val; SaveToggle("AutoKagune", val)
+            if val then task.spawn(function() while getgenv().AutoKagune do pcall(function() Remotes.KaguneLeveling:FireServer() end); task.wait(1) end end) end
+        end
+    })
+
+    local rowCCG = fUpW5:Row()
+    rowCCG:Left():TitleStack({ Title = "Auto Rank Up CCG" })
+    rowCCG:Right():Toggle({
+        Value = cfgBool("AutoRankUpCCG"),
+        ValueChanged = function(self, val)
+            getgenv().AutoRankUpCCG = val; SaveToggle("AutoRankUpCCG", val)
+            if val then 
+                task.spawn(function() 
+                    while getgenv().AutoRankUpCCG do 
+                        pcall(function() 
+                            Remotes:WaitForChild("CCGRank"):FireServer() 
+                        end)
+                        task.wait(1) 
+                    end 
+                end) 
+            end
+        end
+    })
+
+    local psUpW6 = tabUpgrade:PageSection({ Title = "World 6" })
+    local fUpW6  = psUpW6:Form()
+
+    local rowSpiritual = fUpW6:Row()
+    rowSpiritual:Left():TitleStack({ Title = "Auto Upgrade Spiritual" })
+    rowSpiritual:Right():Toggle({
+        Value = cfgBool("AutoSpiritual"),
+        ValueChanged = function(self, val)
+            getgenv().AutoSpiritual = val; SaveToggle("AutoSpiritual", val)
+            if val then 
+                task.spawn(function() 
+                    while getgenv().AutoSpiritual do 
+                        pcall(function() 
+                            Remotes:WaitForChild("SpiritualLeveling"):FireServer() 
+                        end)
+                        task.wait(1) 
+                    end 
+                end) 
+            end
+        end
+    })
+end
+
+-- PLAYER TAB
+local tabPlayer = secPlayer:Tab({ Title = "Player", Icon = cascade.Symbols.person })
+do
+    local psPlayer  = tabPlayer:PageSection({ Title = "Universal Scripts" })
+    local fPlayer   = psPlayer:Form()
+
+    local rowWS = fPlayer:Row()
+    rowWS:Left():TitleStack({ Title = "WalkSpeed" })
+    rowWS:Right():Toggle({
+        Value = cfgBool("ToggleWS"),
+        ValueChanged = function(_, val)
+            getgenv().ToggleWS = val; SaveToggle("ToggleWS", val)
+            if val then
+                task.spawn(function()
+                    while getgenv().ToggleWS do
+                        pcall(function()
+                            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+                            if hum then hum.WalkSpeed = getgenv().WSValue or 50 end
+                        end)
+                        task.wait(0.1)
+                    end
+                end)
+            else
+                pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed = 16 end)
+            end
+        end
+    })
+    
+    local rowWSS = fPlayer:Row()
+    rowWSS:Left():TitleStack({ Title = "Speed Value" })
+    rowWSS:Right():TextField({
+        Value = tostring(Config.WSValue or 50),
+        TextChanged = function(self, val)
+            local num = tonumber(val)
+            if num then
+                getgenv().WSValue = num
+                Config.WSValue = num
+                SaveConfig()
+            end
+        end
+    })
+
+    local rowJP = fPlayer:Row()
+    rowJP:Left():TitleStack({ Title = "JumpPower" })
+    rowJP:Right():Toggle({
+        Value = cfgBool("ToggleJP"),
+        ValueChanged = function(_, val)
+            getgenv().ToggleJP = val; SaveToggle("ToggleJP", val)
+            if val then
+                task.spawn(function()
+                    while getgenv().ToggleJP do
+                        pcall(function()
+                            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+                            if hum then 
+                                hum.UseJumpPower = true
+                                hum.JumpPower = getgenv().JPValue or 50 
+                            end
+                        end)
+                        task.wait(0.1)
+                    end
+                end)
+            else
+                pcall(function() LocalPlayer.Character.Humanoid.JumpPower = 50 end)
+            end
+        end
+    })
+    
+    local rowJPS = fPlayer:Row()
+    rowJPS:Left():TitleStack({ Title = "Jump Value" })
+    rowJPS:Right():TextField({
+        Value = tostring(Config.JPValue or 50),
+        TextChanged = function(self, val)
+            local num = tonumber(val)
+            if num then
+                getgenv().JPValue = num
+                Config.JPValue = num
+                SaveConfig()
+            end
+        end
+    })
+
+    local rowInfJ = fPlayer:Row()
+    rowInfJ:Left():TitleStack({ Title = "Infinite Jump" })
+    rowInfJ:Right():Toggle({
+        Value = cfgBool("InfJump"),
+        ValueChanged = function(_, val)
+            getgenv().InfJump = val; SaveToggle("InfJump", val)
+            if val and not getgenv().InfJumpConn then
+                getgenv().InfJumpConn = UIS.JumpRequest:Connect(function()
+                    if getgenv().InfJump then
+                        pcall(function() LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end)
+                    end
+                end)
+            end
+        end
+    })
+
+    local rowNoclip = fPlayer:Row()
+    rowNoclip:Left():TitleStack({ Title = "Noclip" })
+    rowNoclip:Right():Toggle({
+        Value = cfgBool("Noclip"),
+        ValueChanged = function(_, val)
+            getgenv().Noclip = val; SaveToggle("Noclip", val)
+            if val then
+                task.spawn(function()
+                    getgenv().NoclipConn = RunService.Stepped:Connect(function()
+                        if getgenv().Noclip and LocalPlayer.Character then
+                            for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+                                if v:IsA("BasePart") and v.CanCollide then v.CanCollide = false end
+                            end
+                        end
+                    end)
+                end)
+            else
+                if getgenv().NoclipConn then getgenv().NoclipConn:Disconnect() end
+            end
+        end
+    })
+
+    -- POSITION & WORLD SYSTEM
+    local psPos = tabPlayer:PageSection({ Title = "Save & Load Position" })
+    local fPos  = psPos:Form()
+
+    getgenv().SavedCFrame = nil
+    getgenv().SavedWorld = nil
+
+    local function GetCurrentWorld()
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return nil end
+        local closestWorld, minDist = nil, math.huge
+        for _, obj in ipairs(workspace:GetChildren()) do
+            if obj.Name:match("^World%d+$") then
+                local part = obj:FindFirstChildWhichIsA("BasePart", true)
+                if part then
+                    local dist = (hrp.Position - part.Position).Magnitude
+                    if dist < minDist then minDist = dist; closestWorld = obj.Name end
+                end
+            end
+        end
+        return closestWorld
+    end
+
+    local rowSave = fPos:Row()
+    rowSave:Left():TitleStack({ Title = "Save Position" })
+    rowSave:Right():Button({
+        Label = "SAVE",  
+        Pushed = function() 
+            pcall(function()
+                local hrp = LocalPlayer.Character.HumanoidRootPart
+                getgenv().SavedCFrame = hrp.CFrame
+                getgenv().SavedWorld = GetCurrentWorld()
+                
+                Notify({
+                    Title = "Position Saved!",
+                    Description = "Save World: " .. tostring(getgenv().SavedWorld or "Unknown"),
+                    Duration = 3,
+                    Icon = true
+                })
+            end)
+        end
+    })
+
+    local rowLoad = fPos:Row()
+    rowLoad:Left():TitleStack({ Title = "Back to Save Position" })
+    rowLoad:Right():Button({
+        Label = "TELEPORT",
+        Pushed = function()
+            if not getgenv().SavedCFrame then return end
+            task.spawn(function()
+                pcall(function()
+                    local currentWorld = GetCurrentWorld()
+                    
+                    if getgenv().SavedWorld and currentWorld ~= getgenv().SavedWorld then
+                        Notify({
+                            Title = "Teleporting...",
+                            Description = "Moving to " .. getgenv().SavedWorld,
+                            Duration = 3,
+                            Icon = true
+                        })
+                        pcall(function() 
+                            Remotes:WaitForChild("Teleport"):FireServer(getgenv().SavedWorld) 
+                        end)
+                        task.wait(4) 
+                    end
+                    
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        hrp.CFrame = getgenv().SavedCFrame
+                    end
+                end)
+            end)
+        end
+    })
+end
+
+-- TAB: STATS
+local tabStats = secPlayer:Tab({ Title = "Stats", Icon = cascade.Symbols.chartBar })
+do
+    local statMapping = {
+        ["Energy"] = "Energy",
+        ["Damage"]  = "Damage",
+        ["Coins"]   = "Coins",
+        ["Luck"]    = "Luck"
+    }
+
+    local statOpts = {"Energy", "Damage", "Coins", "Luck"}
+    local SelectedStat = Config.SelectedStat or "Energy"
+
+    if not table.find(statOpts, SelectedStat) then
+        SelectedStat = "Energy"
+    end
+
+    local psAlloc = tabStats:PageSection({ Title = "Attribute Allocation" })
+    local fAlloc  = psAlloc:Form()
+
+    local rowSD = fAlloc:Row()
+    rowSD:Left():TitleStack({ Title = "Select Stat to Upgrade" })
+    rowSD:Right():PopUpButton({ 
+        Options = statOpts, 
+        Value = table.find(statOpts, SelectedStat) or 1,
+        ValueChanged = function(self, idx) 
+            SelectedStat = statOpts[idx]
+            Config.SelectedStat = SelectedStat
+            SaveConfig() 
+        end 
+    })
+
+    local rowAS = fAlloc:Row()
+    rowAS:Left():TitleStack({ Title = "Auto Upgrade Stats" })
+    local togStat 
+    togStat = rowAS:Right():Toggle({
+        Value = cfgBool("AutoStats"),
+        ValueChanged = function(self, val)
+            getgenv().AutoStats = val; SaveToggle("AutoStats", val)
+            if val then task.spawn(function()
+                while getgenv().AutoStats do
+                    pcall(function()
+                        local lbl = PlayerGui.Main.HUD.LeftList.ButtonsList.Stats.Btn.Noti.ResetAmount
+                        if lbl then 
+                            local pts = tonumber(lbl.Text)
+                            if pts and pts > 0 then 
+                                local realStatName = statMapping[SelectedStat] or "Energy"
+                                Remotes:WaitForChild("StatPoints"):FireServer(realStatName, 1)
+                            else 
+                                getgenv().AutoStats = false
+                                pcall(function() togStat.Value = false end) 
+                            end
+                        end
+                    end); task.wait(1)
+                end
+            end) end
+        end,
+    })
+    ToggleRefs["AutoStats"] = togStat
+
+    local psManage = tabStats:PageSection({ Title = "Stats Management" })
+    local fManage  = psManage:Form()
+
+    local rowRs = fManage:Row()
+    rowRs:Left():TitleStack({ Title = "Reset All Stats" })
+    rowRs:Right():Button({ 
+        Label = "Reset Stats", 
+        Pushed = function()
+            pcall(function() 
+                Remotes:WaitForChild("StatReset"):FireServer() 
+                
+                Notify({ 
+                    Title = "Stats Reset", 
+                    Description = "All stats points have been refunded!", 
+                    Duration = 3, 
+                    Icon = true 
+                })
+            end)
+        end 
+    })
+end
+
+-- TAB: MISC
+local tabMisc = secSystem:Tab({ Title = "Misc", Icon = cascade.Symbols.ellipsis })
+do
+    local psRewards = tabMisc:PageSection({ Title = "Daily & Rewards" })
+    local fRewards  = psRewards:Form()
+    
+    local rowDS = fRewards:Row()
+    rowDS:Left():TitleStack({ Title="Auto Claim Daily Streak" })
+    rowDS:Right():Toggle({
+        Value = cfgBool("AutoClaimDailyStreak"),
+        ValueChanged = function(self, val)
+            getgenv().AutoClaimDailyStreak = val
+            SaveToggle("AutoClaimDailyStreak", val)
+            if val then task.spawn(function()
+                while getgenv().AutoClaimDailyStreak do
+                    pcall(function() 
+                        Remotes:WaitForChild("ClaimDailyStreak"):FireServer() 
+                    end)
+                    task.wait(60)
+                end
+            end) end
+        end
+    })
+
+    local rowClaim = fRewards:Row()
+    rowClaim:Left():TitleStack({ Title="Auto Claim Rewards" })
+    rowClaim:Right():Button({ 
+        Label = "Claim All", 
+        Pushed = function()
+            task.spawn(function()
+                for i=1,16 do 
+                    pcall(function() Remotes.ClaimPlaytime:FireServer(i) end)
+                    task.wait(0.1) 
+                end
+                Remotes:WaitForChild("ClaimDaily"):FireServer()
+                
+                Notify({ 
+                    Title = "Rewards Claimed", 
+                    Description = "Successfully claimed Playtime & Daily rewards!", 
+                    Duration = 3, 
+                    Icon = true 
+                })
+            end)
+        end 
+    })
+
+    local rowMilestone = fRewards:Row()
+    rowMilestone:Left():TitleStack({ Title="Auto Claim Level Milestones", Subtitle="Claims all level rewards" })
+    rowMilestone:Right():Toggle({
+        Value = cfgBool("AutoClaimLevelMilestones"),
+        ValueChanged = function(_, val)
+            getgenv().AutoClaimLevelMilestones = val
+            SaveToggle("AutoClaimLevelMilestones", val)
+            if val then 
+                task.spawn(function()
+                    local milestones = {5, 10, 15, 25, 40, 55, 75, 100}
+                    while getgenv().AutoClaimLevelMilestones do
+                        for _, lvl in ipairs(milestones) do
+                            if not getgenv().AutoClaimLevelMilestones then break end
+                            pcall(function() 
+                                Remotes:WaitForChild("ClaimLevelMilestone"):FireServer(lvl) 
+                            end)
+                            task.wait(0.2)
+                        end
+                        task.wait(60)
+                    end
+                end) 
+            end
+        end
+    })
+
+    local psQuests = tabMisc:PageSection({ Title = "Quests" })
+    local fQuests  = psQuests:Form()
+
+    local rowSQ = fQuests:Row()
+    rowSQ:Left():TitleStack({ Title="Auto Claim Star Quest" })
+    rowSQ:Right():Toggle({
+        Value = cfgBool("AutoClaimStarQuest"),
+        ValueChanged = function(self, val)
+            getgenv().AutoClaimStarQuest = val; SaveToggle("AutoClaimStarQuest", val)
+            if val then task.spawn(function()
+                while getgenv().AutoClaimStarQuest do
+                    for i=1,6 do if not getgenv().AutoClaimStarQuest then break end
+                        pcall(function() Remotes:WaitForChild("StarQuests"):WaitForChild("ClaimStar"..i.."Hatches"):FireServer() end)
+                        task.wait(0.3)
+                    end; task.wait(1)
+                end
+            end) end
+        end,
+    })
+
+    local psCodes = tabMisc:PageSection({ Title = "Codes" })
+    local fCodes  = psCodes:Form()
+
+    local rowCodes = fCodes:Row()
+    rowCodes:Left():TitleStack({ Title="Redeem All Codes" })
+    rowCodes:Right():Button({ 
+        Label = "Redeem", 
+        Pushed = function()
+            task.spawn(function()
+                local n = 0
+                local codesToRedeem = {}
+                
+                local success, codesModule = pcall(function()
+                    return require(game:GetService("ReplicatedStorage"):WaitForChild("ModuleScripts"):WaitForChild("Codes"))
+                end)
+
+                if success and type(codesModule) == "table" and type(codesModule.Config) == "table" then
+                    local currentTime = os.time()
+                    for codeName, data in pairs(codesModule.Config) do
+                        if type(data) == "table" then
+                            local expireTime = data.Expire or 0
+                            if expireTime == 0 or currentTime <= expireTime then
+                                table.insert(codesToRedeem, codeName)
+                            end
+                        end
+                    end
+                else
+                    Notify({ Title="Warning", Description="Failed to fetch codes. Using fallback.", Duration=4 })
+                    codesToRedeem = {"Easter2", "1M Visits", "Tower", "Quest", "10K Favs", "Easter", "Sunday", "Bugfix", "Shutdown!", "HYPE", "Leveling", "Part 3", "1.5K Likes", "2K CCU", "Part 2"}
+                end
+
+                for _, code in ipairs(codesToRedeem) do
+                    pcall(function() 
+                        Remotes:WaitForChild("RedeemCode"):InvokeServer(code) 
+                    end)
+                    n = n + 1
+                    task.wait(0.1)
+                end
+                
+                Notify({ Title="Redeem Codes", Description="Attempted "..n.." active codes!", Duration=5, Icon=true })
+            end)
+        end 
+    })
+
+    local psGacha = tabMisc:PageSection({ Title = "Disable Gacha Roll" })
+    local fGacha  = psGacha:Form()
+
+    local gachaConnections = {}
+
+    local rowGachaSkip = fGacha:Row()
+    rowGachaSkip:Left():TitleStack({ 
+        Title = "Fast Gacha Skip", 
+        Subtitle = "Instant close Shop & Animation completely" 
+    })
+    rowGachaSkip:Right():Toggle({
+        Value = cfgBool("FastGachaSkip"),
+        ValueChanged = function(_, val)
+            getgenv().FastGachaSkip = val
+            SaveToggle("FastGachaSkip", val)
+            
+            if val then
+                pcall(function()
+                    local mainUI = PlayerGui:FindFirstChild("Main")
+                    if not mainUI then return end
+                    
+                    local gachaRoll = mainUI:FindFirstChild("GachaRoll")
+                    local gachaShop = mainUI:FindFirstChild("Gacha") or (mainUI:FindFirstChild("Frames") and mainUI.Frames:FindFirstChild("Gacha"))
+                    local hudUI   = mainUI:FindFirstChild("HUD")
+                    
+                    local function hideAndSkip(ui)
+                        if ui and (ui.Visible or ui:GetAttribute("Open") == true) then
+                            if ui.Name == "GachaRoll" and not getgenv().OriGachaPos then getgenv().OriGachaPos = ui.Position end
+                            if ui.Name == "Gacha" and not getgenv().OriShopPos then getgenv().OriShopPos = ui.Position end
+                            
+                            ui.Visible = false
+                            ui:SetAttribute("Open", false)
+                            ui.Position = UDim2.new(999, 0, 999, 0)
+                            
+                            for _, btn in ipairs(ui:GetDescendants()) do
+                                if btn:IsA("GuiButton") then
+                                    local n = string.lower(btn.Name)
+                                    local t = btn:IsA("TextButton") and string.lower(btn.Text) or ""
+                                    
+                                    if n:find("skip") or n:find("close") or n:find("back") or n:find("exit") or n == "x" or
+                                       t:find("skip") or t:find("close") or t:find("back") then
+                                        if getconnections then
+                                            for _, conn in ipairs(getconnections(btn.MouseButton1Click)) do conn:Fire() end
+                                            for _, conn in ipairs(getconnections(btn.Activated)) do conn:Fire() end
+                                        end
+                                    end
+                                end
+                            end
+                            if hudUI and not hudUI.Visible then hudUI.Visible = true end
+                        end
+                    end
+
+                    hideAndSkip(gachaRoll)
+                    hideAndSkip(gachaShop)
+
+                    if gachaRoll then
+                        table.insert(gachaConnections, gachaRoll:GetPropertyChangedSignal("Visible"):Connect(function() hideAndSkip(gachaRoll) end))
+                        table.insert(gachaConnections, gachaRoll:GetAttributeChangedSignal("Open"):Connect(function() hideAndSkip(gachaRoll) end))
+                    end
+                    if gachaShop then
+                        table.insert(gachaConnections, gachaShop:GetPropertyChangedSignal("Visible"):Connect(function() hideAndSkip(gachaShop) end))
+                        table.insert(gachaConnections, gachaShop:GetAttributeChangedSignal("Open"):Connect(function() hideAndSkip(gachaShop) end))
+                    end
+                end)
+            else
+                for _, conn in ipairs(gachaConnections) do
+                    pcall(function() conn:Disconnect() end)
+                end
+                gachaConnections = {}
+                
+                pcall(function()
+                    local mainUI = PlayerGui:FindFirstChild("Main")
+                    if mainUI then
+                        local gachaRoll = mainUI:FindFirstChild("GachaRoll")
+                        local gachaShop = mainUI:FindFirstChild("Gacha") or (mainUI:FindFirstChild("Frames") and mainUI.Frames:FindFirstChild("Gacha"))
+                        
+                        if gachaRoll and getgenv().OriGachaPos then gachaRoll.Position = getgenv().OriGachaPos end
+                        if gachaShop and getgenv().OriShopPos then gachaShop.Position = getgenv().OriShopPos end
+                    end
+                end)
+            end
+        end,
+    })
+
+    local rowDestroy = fGacha:Row()
+    rowDestroy:Left():TitleStack({ 
+        Title = "Destroy Gacha UI", 
+    })
+    rowDestroy:Right():Button({ 
+        Label = "Destroy", 
+        Pushed = function()
+            task.spawn(function()
+                local frames = PlayerGui.Main.Frames
+                local count = 0
+                
+               for _, frame in ipairs(frames:GetChildren()) do
+                    if frame.Name:match("Powers$") then
+                        pcall(function() frame:Destroy() end)
+                        count = count + 1
+                    end
+                end
+                
+                pcall(function()
+                    app:Banner({
+                        Title = "UI Cleaner",
+                        Body  = "Removed " .. count .. " stuck UI frames.",
+                        Description = "Success",
+                        Duration = 3,
+                    })
+                end)
+            end)
+        end
+    })
+end
+
+-- TAB: SERVERS
+local tabServers = secSystem:Tab({ Title = "Servers", Icon = cascade.Symbols.globe })
+do
+    local psServers = tabServers:PageSection({ Title = "Server Management" })
+    local fServers  = psServers:Form()
+
+    local rowRejoin = fServers:Row()
+    rowRejoin:Left():TitleStack({ 
+        Title = "Instant Rejoin", 
+        Subtitle = "Rejoin current server immediately" 
+    })
+    rowRejoin:Right():Button({ 
+        Label = "Rejoin", 
+        Pushed = function()
+            pcall(function()
+                Notify({ Title = "Server", Description = "Rejoining server...", Duration = 3, Icon = true })
+                task.wait(0.5)
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+            end)
+        end 
+    })
+
+    local rowHop = fServers:Row()
+    rowHop:Left():TitleStack({ 
+        Title = "Server Hop", 
+        Subtitle = "Teleport to a different server" 
+    })
+    rowHop:Right():Button({ 
+        Label = "Server Hop", 
+        Pushed = function()
+            task.spawn(function()
+                Notify({ Title = "Server", Description = "Finding a new server...", Duration = 3, Icon = true })
+                                
+                local req = request or http_request or (syn and syn.request)
+                if not req then 
+                    Notify({ Title = "Error", Description = "HTTP Request not supported.", Duration = 3 })
+                    return 
+                end
+                
+                pcall(function()
+                    local url = "https://games.roblox.com/v1/games/" .. tostring(game.PlaceId) .. "/servers/Public?sortOrder=Desc&limit=100"
+                    local response = req({Url = url, Method = "GET"})
+                    
+                    if response and response.Success then
+                        local data = HttpService:JSONDecode(response.Body)
+                        local validServers = {}
+                        
+                        for _, v in pairs(data.data) do
+                            if type(v) == "table" and v.playing and v.maxPlayers and v.playing < (v.maxPlayers - 1) and v.id ~= game.JobId then
+                                table.insert(validServers, v.id)
+                            end
+                        end
+                        
+                        if #validServers > 0 then
+                            local randomServer = validServers[math.random(1, #validServers)]
+                            TeleportService:TeleportToPlaceInstance(game.PlaceId, randomServer, LocalPlayer)
+                        else
+                            Notify({ Title = "Server Hop", Description = "No available servers found.", Duration = 3 })
+                        end
+                    else
+                        Notify({ Title = "Error", Description = "Failed to fetch servers.", Duration = 3 })
+                    end
+                end)
+            end)
+        end 
+    })
+end
+
+-- TAB: SETTINGS
+local tabSettings = secSystem:Tab({ Title = "Settings", Icon = cascade.Symbols.gear })
+do
+    local psAuto = tabSettings:PageSection({ Title = "Automation" })
+    local fAuto  = psAuto:Form()
+
+    local rowAFK = fAuto:Row()
+    rowAFK:Left():TitleStack({ Title = "Anti AFK" })
+    rowAFK:Right():Toggle({
+        Value = Config.AntiAFK ~= false,
+        ValueChanged = function(_, val) getgenv().AntiAFK = val; Config.AntiAFK = val; SaveConfig() end
+    })
+
+    local rowRJ = fAuto:Row()
+    rowRJ:Left():TitleStack({ Title = "Auto Rejoin" })
+    rowRJ:Right():Toggle({
+        Value = cfgBool("AutoRejoinEnabled"),
+        ValueChanged = function(_, val) getgenv().AutoRejoinEnabled = val; SaveToggle("AutoRejoinEnabled", val) end
+    })
+
+    local psPrivacy = tabSettings:PageSection({ Title = "Privacy" })
+    local fPrivacy  = psPrivacy:Form()
+
+    local rowStreamer = fPrivacy:Row()
+    rowStreamer:Left():TitleStack({ Title = "Streamer Mode" })
+    rowStreamer:Right():Toggle({
+        Value = cfgBool("StreamerMode"),
+        ValueChanged = function(_, val)
+            getgenv().StreamerMode = val
+            SaveToggle("StreamerMode", val)
+            
+            if val then
+                task.spawn(function()
+                    local spoofName = "Axel HUB"
+                    local realName = LocalPlayer.Name
+                    local realDisplay = LocalPlayer.DisplayName
+
+                    while getgenv().StreamerMode do
+                        pcall(function()
+                            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                                LocalPlayer.Character.Humanoid.DisplayName = spoofName
+                            end
+
+                            if LocalPlayer.Character then
+                                for _, v in ipairs(LocalPlayer.Character:GetDescendants()) do
+                                    if v:IsA("TextLabel") or v:IsA("TextButton") then
+                                        if v.Text:find(realName, 1, true) or v.Text:find(realDisplay, 1, true) then
+                                            v.Text = spoofName
+                                        end
+                                    end
+                                end
+                            end
+
+                            local success, cGui = pcall(function() return game:GetService("CoreGui") end)
+                            if success and cGui then
+                                for _, v in ipairs(cGui:GetDescendants()) do
+                                    if v:IsA("TextLabel") or v:IsA("TextButton") then
+                                        if v.Text == realName or v.Text == realDisplay then
+                                            v.Text = spoofName
+                                        end
+                                    end
+                                end
+                            end
+                        end)
+                        task.wait(1)
+                    end
+                end)
+            else
+                pcall(function()
+                    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                        LocalPlayer.Character.Humanoid.DisplayName = LocalPlayer.DisplayName
+                    end
+                end)
+            end
+        end
+    })
+
+    local psPerf = tabSettings:PageSection({ Title = "Performance" })
+    local fPerf  = psPerf:Form()
+
+    local function ToggleWorldVFX(val)
+        for _, world in ipairs(workspace:GetChildren()) do
+            if world.Name:match("^World%d+$") then
+                pcall(function()
+                    local worldChildren = world:GetChildren()
+                    local vfxFolder = worldChildren[5] and worldChildren[5]:FindFirstChild("VFX")
+                    
+                    if vfxFolder then
+                        for _, effect in ipairs(vfxFolder:GetChildren()) do
+                            if effect:IsA("ParticleEmitter") or effect:IsA("Beam") or effect:IsA("Trail") then
+                                effect.Enabled = not val
+                            elseif effect:IsA("BasePart") or effect:IsA("Model") then
+                                local targetTransparency = val and 1 or 0
+                                if effect:IsA("BasePart") then
+                                    effect.Transparency = targetTransparency
+                                else
+                                    for _, p in ipairs(effect:GetDescendants()) do
+                                        if p:IsA("BasePart") then p.Transparency = targetTransparency end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end
+
+    -- GLOBAL VFX WIPE
+    getgenv().VFXConnections = getgenv().VFXConnections or {}
+
+    local function ToggleGlobalVFX(disable)
+        getgenv().DisableVFX = disable
+        
+        if disable then
+            pcall(function()
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
+                        obj.Enabled = false
+                        if obj:IsA("ParticleEmitter") then obj:Clear() end
+                    end
+                end
+            end)
+            
+            if not getgenv().VFXConnections["VFX_Wipe"] then
+                getgenv().VFXConnections["VFX_Wipe"] = workspace.DescendantAdded:Connect(function(obj)
+                    if not getgenv().DisableVFX then return end
+                    
+                    if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
+                        task.defer(function()
+                            obj.Enabled = false
+                            if obj:IsA("ParticleEmitter") then obj:Clear() end
+                        end)
+                    end
+                end)
+            end
+        else
+            if getgenv().VFXConnections["VFX_Wipe"] then
+                getgenv().VFXConnections["VFX_Wipe"]:Disconnect()
+                getgenv().VFXConnections["VFX_Wipe"] = nil
+            end
+            
+            pcall(function()
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
+                        obj.Enabled = true
+                    end
+                end
+            end)
+        end
+    end
+
+    local function applyLowGraphics()
+        local w = workspace
+        local l = Lighting
+        pcall(function()
+            w.Terrain.WaterWaveSize    = 0
+            w.Terrain.WaterWaveSpeed   = 0
+            w.Terrain.WaterReflectance = 0
+            w.Terrain.WaterTransparency= 0
+            l.GlobalShadows            = false
+            l.FogEnd                   = 9e9
+            l.Brightness               = 0
+            settings().Rendering.QualityLevel = "Level01"
+        end)
+        for _, v in pairs(game:GetDescendants()) do
+            pcall(function()
+                if v:IsA("Part") or v:IsA("Union") or v:IsA("MeshPart") then
+                    v.Material    = "Plastic"
+                    v.Reflectance = 0
+                elseif v:IsA("Decal") or v:IsA("Texture") then
+                    v.Transparency = 1
+                elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+                    v.Lifetime = NumberRange.new(0)
+                end
+            end)
+        end
+    end
+
+    local _blackOverlay = nil
+    local function showBlackOverlay(show)
+        if show then
+            if not _blackOverlay then
+                local sg = Instance.new("ScreenGui")
+                sg.Name           = "VOX_BlackOverlay"
+                sg.ResetOnSpawn   = false
+                sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+                sg.DisplayOrder   = -999
+                sg.IgnoreGuiInset = true
+                sg.Parent         = PlayerGui
+                local frame = Instance.new("Frame")
+                frame.Size                 = UDim2.new(1,0,1,0)
+                frame.BackgroundColor3     = Color3.new(0,0,0)
+                frame.BackgroundTransparency = 0
+                frame.BorderSizePixel      = 0
+                frame.Parent               = sg
+                _blackOverlay = sg
+            end
+            _blackOverlay.Enabled = true
+        else
+            if _blackOverlay then _blackOverlay.Enabled = false end
+        end
+    end
+
+    task.spawn(function()
+        task.wait(1)
+        if cfgBool("ScreenMode") then
+            pcall(function() RunService:Set3dRenderingEnabled(false) end)
+        end
+        if cfgBool("BlackMode") then
+            pcall(function() RunService:Set3dRenderingEnabled(false) end)
+            showBlackOverlay(true)
+        end
+        if cfgBool("LowGraphics") then ToggleGlobalVFX(true) end
+    end)
+
+    local rowFPS = fPerf:Row()
+    rowFPS:Left():TitleStack({ Title = "AFK FPS Cap (15 FPS)" })
+    rowFPS:Right():Toggle({
+        Value = cfgBool("FPSCap"),
+        ValueChanged = function(_, val)
+            SaveToggle("FPSCap", val)
+            local setfps = setfpscap or set_fps_cap or (syn and syn.set_fps_cap) or (fluxus and fluxus.setfpscap)
+            
+            if setfps then
+                if val then
+                    setfps(15)
+                else
+                    setfps(60)
+                end
+            else
+                pcall(function() Notify({ Title = "Notice", Description = "Your executor doesn't support FPS Capping.", Duration = 3 }) end)
+            end
+        end,
+    })
+
+    local rowWS = fPerf:Row()
+    rowWS:Left():TitleStack({ Title = "White Screen", Subtitle = "Disable 3D rendering (white screen)" })
+    rowWS:Right():Toggle({
+        Value = cfgBool("ScreenMode"),
+        ValueChanged = function(_, val)
+            SaveToggle("ScreenMode", val)
+            if val then SaveToggle("BlackMode", false); showBlackOverlay(false) end
+            pcall(function() RunService:Set3dRenderingEnabled(not val) end)
+        end,
+    })
+
+    local rowBS = fPerf:Row()
+    rowBS:Left():TitleStack({ Title = "Black Screen", Subtitle = "Disable 3D rendering (black screen)" })
+    rowBS:Right():Toggle({
+        Value = cfgBool("BlackMode"),
+        ValueChanged = function(_, val)
+            SaveToggle("BlackMode", val)
+            if val then
+                SaveToggle("ScreenMode", false)
+                pcall(function() RunService:Set3dRenderingEnabled(false) end)
+                showBlackOverlay(true)
+            else
+                pcall(function() RunService:Set3dRenderingEnabled(true) end)
+                showBlackOverlay(false)
+            end
+        end,
+    })
+
+    local rowLG = fPerf:Row()
+    rowLG:Left():TitleStack({ Title = "Disable All VFX", Subtitle = "Global Wipe: Removes all particles" })
+    rowLG:Right():Toggle({
+        Value = cfgBool("LowGraphics"),
+        ValueChanged = function(_, val)
+            SaveToggle("LowGraphics", val)
+            ToggleGlobalVFX(val)
+        end,
+    })
+
+    local rowPotato = fPerf:Row()
+    rowPotato:Left():TitleStack({ Title = "Potato Mode (Low RAM)", Subtitle = "Removes textures & materials to save memory" })
+    rowPotato:Right():Button({
+        Label = "Apply",
+        Pushed = function()
+            task.spawn(function()
+                Notify({ Title = "Optimizing", Description = "Clearing textures and shadows...", Duration = 3, Icon = true })
+                local w = workspace
+                local l = Lighting
+                pcall(function()
+                    w.Terrain.WaterWaveSize = 0
+                    w.Terrain.WaterWaveSpeed = 0
+                    w.Terrain.WaterReflectance = 0
+                    w.Terrain.WaterTransparency = 0
+                    l.GlobalShadows = false
+                    l.FogEnd = 9e9
+                    l.Brightness = 0
+                    settings().Rendering.QualityLevel = "Level01"
+                end)
+                for _, v in ipairs(game:GetDescendants()) do
+                    if v:IsA("Part") or v:IsA("Union") or v:IsA("MeshPart") then
+                        pcall(function()
+                            v.Material = Enum.Material.SmoothPlastic
+                            v.Reflectance = 0
+                        end)
+                    elseif v:IsA("Decal") or v:IsA("Texture") then
+                        pcall(function() v:Destroy() end)
+                    end
+                end
+            end)
+        end
+    })
+
+    local rowHN = fPerf:Row()
+    rowHN:Left():TitleStack({ Title = "Hide Notif Bar", Subtitle = "Hides the bottom notification bar" })
+    rowHN:Right():Toggle({
+        Value = cfgBool("HideNotifBar"),
+        ValueChanged = function(_, val)
+            SaveToggle("HideNotifBar", val)
+            pcall(function()
+                local bar = PlayerGui.Notification._BAR_.BOTTOM
+                if bar then bar.Visible = not val end
+            end)
+        end,
+    })
+
+    local rowDrop = fPerf:Row()
+    rowDrop:Left():TitleStack({ Title="Disable Drop Notis", Subtitle="Hides Coins/Exp popups in HUD" })
+    rowDrop:Right():Toggle({
+        Value = cfgBool("DisableDropsNoti"),
+        ValueChanged = function(_, val)
+            getgenv().DisableDropsNoti = val
+            SaveToggle("DisableDropsNoti", val)
+            if val then task.spawn(function()
+                while getgenv().DisableDropsNoti do
+                    pcall(function()
+                        local dropsUI = PlayerGui.Main.HUD:FindFirstChild("Drops")
+                        if dropsUI then
+                            dropsUI.Visible = false
+                            for _, item in ipairs(dropsUI:GetChildren()) do
+                                if item:IsA("GuiObject") then item.Visible = false end
+                            end
+                        end
+                    end)
+                    task.wait(0.1)
+                end
+                
+                pcall(function()
+                    local dropsUI = PlayerGui.Main.HUD:FindFirstChild("Drops")
+                    if dropsUI then dropsUI.Visible = true end
+                end)
+            end) end
+        end
+    })
+
+    local psUI = tabSettings:PageSection({ Title = "UI Controls" })
+    local fUI  = psUI:Form()
+
+    local rowDeviceReset = fUI:Row()
+    rowDeviceReset:Left():TitleStack({ Title = "Reset Device Type", Subtitle = "Switch between PC and Mobile" })
+    rowDeviceReset:Right():Button({
+        Label = "Reset",
+        Pushed = function()
+            Config.DeviceType = nil
+            SaveConfig()
+            pcall(function()
+                Notify({ Title="Device Reset", Description="Please re-execute the script to choose again.", Duration=5, Icon=true })
+            end)
+        end
+    })
+    
+    local rowDM = fUI:Row()
+    rowDM:Left():TitleStack({ Title = "Dark Mode", Subtitle = "Toggle dark/light theme" })
+    rowDM:Right():Toggle({
+        Value = Config.DarkMode ~= false,
+        ValueChanged = function(_, val)
+            Config.DarkMode = val; SaveConfig()
+            pcall(function() app.Theme = val and cascade.Themes.Dark or cascade.Themes.Light end)
+        end
+    })
+
+    local rowMK = fUI:Row()
+    rowMK:Left():TitleStack({ Title = "Minimize Key", Subtitle = "Key to show/hide the menu" })
+    pcall(function()
+        rowMK:Right():KeybindField({
+            Value = MinimizeKey,
+            ValueChanged = function(_, key)
+                MinimizeKey = key
+                Config.MinimizeKey = key.Name
+                SaveConfig()
+            end,
+        })
+    end)
+
+    local rowDP = fUI:Row()
+    rowDP:Left():TitleStack({ Title = "Dropshadow", Subtitle = "Shadow behind the window" })
+    rowDP:Right():Toggle({
+        Value = cfgBool("Dropshadow"),
+        ValueChanged = function(_, val)
+            SaveToggle("Dropshadow", val)
+            pcall(function() window.Dropshadow = val end)
+        end,
+    })
+
+    local rowBL = fUI:Row()
+    rowBL:Left():TitleStack({ Title = "Background Blur", Subtitle = "Blur effect behind window" })
+    rowBL:Right():Toggle({
+        Value = cfgBool("UIBlur"),
+        ValueChanged = function(_, val)
+            SaveToggle("UIBlur", val)
+            pcall(function() window.UIBlur = val end)
+        end,
+    })
+
+    local rowRst = fUI:Row()
+    rowRst:Left():TitleStack({ Title = "Fix Float Icon", Subtitle = "Reset icon position to default" })
+    rowRst:Right():Button({
+        Label = "Reset Position",
+        Pushed = function()
+            btnFrame.Position = UDim2.new(0.5, -25, 0.1, -25)
+
+            Config.ButtonX = nil
+            Config.ButtonY = nil
+            SaveConfig()
+            
+            pcall(function()
+                Notify({ Title="UI Fix", Description="Icon position reset to top-center!", Duration=3, Icon=true })
+            end)
+        end
+    })
+
+    local rowStop = fUI:Row()
+    rowStop:Left():TitleStack({ 
+        Title = "Stop All Features", 
+        Subtitle = "Halt all running auto farm loops" 
+    })
+    
+    rowStop:Right():Button({
+        Label = "Stop All",
+        Pushed = function()
+            getgenv().AutoRankUp = false
+            getgenv().AutoTeleport = false
+            getgenv().AutoWorldQuest = false
+            getgenv().AutoClick = false
+            getgenv().AutoRollSaiyan = false
+            getgenv().AutoRollDragonball = false
+            getgenv().AutoRollFruits = false
+            getgenv().AutoRollBlessing = false
+            getgenv().AutoRollEaster = false
+            getgenv().AutoRollProsperity = false
+            getgenv().AutoRollGrimoires = false
+            getgenv().AutoRollDemon = false
+            getgenv().AutoRollBreathing = false
+            getgenv().AutoBloodArt = false
+            getgenv().AutoWisteria = false
+            getgenv().AutoEgg = false
+            getgenv().AutoEasterBasket = false
+            getgenv().AutoWisteriaRaid = false
+            getgenv().AutoUpgradeHaki = false
+            getgenv().AutoUpgradeAttackRange = false
+            getgenv().AutoStats = false
+            getgenv().AutoClaimStarQuest = false
+            getgenv().AutoRollMask = false
+            getgenv().AutoRollRace = false
+            getgenv().AutoKagune = false
+            getgenv().AutoEasterRaid = false
+            getgenv().AutoTower = false
+            getgenv().DisableDropsNoti = false
+            getgenv().WisteriaCenterTP = false
+            getgenv().EasterCenterTP = false
+            getgenv().TowerCenterTP = false
+            getgenv().FastGachaSkip = false
+            getgenv().AutoClaimLevelMilestones = false
+
+            pcall(function() RunService:Set3dRenderingEnabled(true) end)
+            if _blackOverlay then 
+                pcall(function() _blackOverlay:Destroy() end) 
+            end
+            pcall(function()
+                local bar = PlayerGui.Notification._BAR_.BOTTOM
+                if bar then bar.Visible = true end
+            end)
+
+            pcall(function()
+                Notify({ Title="System", Description="All auto features stopped.", Duration=5, Icon=true })
+            end)
+        end
+    })
+end
+
+-- AUTO REJOIN SYSTEM
+task.spawn(function()
+    local TeleportService = TeleportService
+
+    local function doRejoin()
+        if getgenv().AutoRejoinEnabled then
+            task.wait(5)
+            pcall(function()
+                TeleportService:Teleport(game.PlaceId, Players.LocalPlayer)
+            end)
+        end
+    end
+
+    GuiService.ErrorMessageChanged:Connect(function()
+        doRejoin()
+    end)
+
+    pcall(function()
+        local promptGui = CoreGui:FindFirstChild("RobloxPromptGui")
+        if promptGui then
+            local promptOverlay = promptGui:FindFirstChild("promptOverlay")
+            if promptOverlay then
+                promptOverlay.ChildAdded:Connect(function(child)
+                    if child.Name == "ErrorPrompt" then
+                        doRejoin()
+                    end
+                end)
+            end
+        end
+    end)
+end)
+
+-- ANTI AFK 
+getgenv().AntiAFK = true
+
+task.spawn(function()
+    local VirtualInputManager = game:GetService("VirtualInputManager")
+
+    LocalPlayer.Idled:Connect(function()
+        if getgenv().AntiAFK then
+            pcall(function()
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+            end)
+        end
+    end)
+
+    task.spawn(function()
+        while true do
+            task.wait(2.5)
+            if getgenv().AntiAFK then
+                pcall(function()
+                    if remotes and remotes:FindFirstChild("Clicked") then
+                        remotes.Clicked:FireServer()
+                    end
+                end)
+            end
+        end
+    end)
+
+    pcall(function()
+        if remotes then
+            local requestAfk = remotes:FindFirstChild("RequestAfkRestore")
+            local cancelAfk = remotes:FindFirstChild("CancelAfkRestore")
+            
+            if requestAfk and requestAfk:IsA("RemoteEvent") then
+                requestAfk.OnClientEvent:Connect(function()
+                    if getgenv().AntiAFK and cancelAfk then
+                        task.wait(math.random(1, 3))
+                        cancelAfk:FireServer()
+                    end
+                end)
+            end
+        end
+    end)
+end)
+
+-- NOTIFY LOADED
+pcall(function()
+    Notify({
+        Title       = "Anime Leveling",
+        Description = "Loaded! Press RightControl to toggle icon",
+        Duration    = 6,
+        Icon        = true
+    })
+end)
+
+task.spawn(function()
+    if Config and Config.DeviceType == "Mobile" then
+        while task.wait(1) do
+            pcall(function()
+                local uiContainer = pcall(function() return game:GetService("CoreGui").Name end) and game:GetService("CoreGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+                
+                for _, gui in ipairs(uiContainer:GetChildren()) do
+                    if gui:IsA("ScreenGui") and gui.Name ~= "VOX_DeviceSelector" and not string.match(gui.Name, "^VOX_Toggle_") then
+                        local hasContent = gui:FindFirstChild("MainFrame", true) or gui:FindFirstChild("Header", true)
+                        if hasContent then
+                            for _, child in ipairs(gui:GetChildren()) do
+                                if child:IsA("GuiObject") then
+                                    local uiScale = child:FindFirstChildOfClass("UIScale")
+                                    if not uiScale then
+                                        uiScale = Instance.new("UIScale")
+                                        uiScale.Parent = child
+                                    end
+                                    uiScale.Scale = 0.45
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
